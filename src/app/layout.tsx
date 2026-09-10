@@ -1,11 +1,11 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
-import { Inter } from "next/font/google";
-import Script from "next/script";
-import "./globals.css";
-import { ThemeProvider } from "@/hooks/use-theme";
-import { ThemedToaster } from "@/components/themed-toaster";
+import { Inter, League_Spartan } from 'next/font/google';
+import Script from 'next/script';
+import './globals.css';
+import { ThemeProvider } from '@/hooks/use-theme';
+import { ThemedToaster } from '@/components/themed-toaster';
 import {
   DEFAULT_MODE,
   DEFAULT_THEME,
@@ -13,25 +13,31 @@ import {
   MODES,
   STORAGE_KEY,
   THEME_IDS,
-} from "@/lib/themes";
+} from '@/lib/themes';
 
 const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
+  variable: '--font-sans',
+  subsets: ['latin'],
+});
+
+const leagueSpartan = League_Spartan({
+  variable: '--font-display',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "wacrm",
-    template: "%s — wacrm",
+    default: 'CREACOM | Sistema Comercial de Hormigón',
+    template: '%s — CREACOM',
   },
-  description: "Self-hostable CRM template for WhatsApp.",
+  description:
+    'CRM comercial de CREACOM Hormigonera para clientes, obras, cotizaciones y conversaciones de ventas.',
   robots: {
     index: false,
     follow: false,
   },
   icons: {
-    icon: [{ url: "/icon" }],
+    icon: [{ url: '/icon' }],
   },
   formatDetection: {
     email: false,
@@ -41,8 +47,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#020617",
-  colorScheme: "dark light",
+  themeColor: '#ffffff',
+  colorScheme: 'dark light',
 };
 
 // Inline boot script — runs before React hydrates so the user's
@@ -90,7 +96,7 @@ export default async function RootLayout({
       lang={locale}
       data-theme={DEFAULT_THEME}
       data-mode={DEFAULT_MODE}
-      className={`${inter.variable} h-full antialiased`}
+      className={`${inter.variable} ${leagueSpartan.variable} h-full antialiased`}
       // The `theme-boot` script below rewrites `data-theme` and
       // `data-mode` on <html> from localStorage before React hydrates,
       // so for any non-default choice the client DOM intentionally
@@ -107,7 +113,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }}
         />
       </head>
-      <body className="min-h-full bg-background text-foreground font-sans">
+      <body className="bg-background text-foreground min-h-full font-sans">
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider>
             {children}

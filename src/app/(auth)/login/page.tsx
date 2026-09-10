@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { MessageSquare, UsersRound } from "lucide-react";
+} from '@/components/ui/card';
+import { HardHat, UsersRound } from 'lucide-react';
 
 // `useSearchParams` opts the component out of static prerendering
 // unless it sits under a Suspense boundary. We split the form into
@@ -35,11 +35,11 @@ function LoginPageInner() {
   // Forwarded from `/join/<token>` when the visitor already has an
   // account. After a successful sign-in we send them to the join
   // page to accept rather than to /dashboard.
-  const inviteToken = searchParams.get("invite");
-  const t = useTranslations("LoginPage");
+  const inviteToken = searchParams.get('invite');
+  const t = useTranslations('LoginPage');
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
@@ -70,31 +70,32 @@ function LoginPageInner() {
     // reload the invite-accept flow already uses in join/[token].
     const destination = inviteToken
       ? `/join/${encodeURIComponent(inviteToken)}`
-      : "/dashboard";
+      : '/dashboard';
     window.location.href = destination;
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md border-border bg-card">
-        <CardHeader className="items-center text-center">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+    <div className="flex min-h-screen items-center justify-center px-5 pt-32 pb-10 sm:px-10 sm:pt-36">
+      <Card className="w-full max-w-md border-0 bg-white shadow-[0_24px_70px_-32px_rgba(21,21,21,0.42)] ring-1 ring-[#151515]/10">
+        <CardHeader className="px-6 pt-7 pb-2 sm:px-8">
+          <div className="bg-primary mb-4 flex h-10 w-10 items-center justify-center rounded-md text-white shadow-sm">
             {inviteToken ? (
-              <UsersRound className="h-6 w-6 text-primary" />
+              <UsersRound className="h-5 w-5" />
             ) : (
-              <MessageSquare className="h-6 w-6 text-primary" />
+              <HardHat className="h-5 w-5" />
             )}
           </div>
-          <CardTitle className="text-xl text-foreground">
+          <p className="font-heading text-primary text-[11px] font-bold tracking-[0.22em] uppercase">
+            Portal de ventas
+          </p>
+          <CardTitle className="text-foreground mt-1 text-3xl leading-none font-bold uppercase">
             {inviteToken ? t('titleAccept') : t('titleWelcome')}
           </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            {inviteToken
-              ? t('descAccept')
-              : t('descWelcome')}
+          <CardDescription className="text-muted-foreground mt-2">
+            {inviteToken ? t('descAccept') : t('descWelcome')}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6 pb-7 sm:px-8">
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             {error && (
               <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
@@ -113,7 +114,7 @@ function LoginPageInner() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="border-border bg-muted text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/20"
+                className="border-border text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/20 h-11 rounded-md bg-[#f7f7f6] px-3"
               />
             </div>
 
@@ -124,7 +125,7 @@ function LoginPageInner() {
                 </Label>
                 <Link
                   href="/forgot-password"
-                  className="text-sm text-primary hover:text-primary/80"
+                  className="text-primary hover:text-primary/80 text-sm"
                 >
                   {t('forgotPassword')}
                 </Link>
@@ -136,26 +137,26 @@ function LoginPageInner() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="border-border bg-muted text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/20"
+                className="border-border text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/20 h-11 rounded-md bg-[#f7f7f6] px-3"
               />
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="mt-2 h-10 w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="bg-primary font-heading text-primary-foreground hover:bg-primary-hover mt-2 h-11 w-full rounded-md font-bold tracking-[0.12em] uppercase disabled:opacity-50"
             >
               {loading ? t('signingIn') : t('signIn')}
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            {t('noAccount')}{" "}
+          <p className="text-muted-foreground mt-6 text-center text-sm">
+            {t('noAccount')}{' '}
             <Link
               href={
                 inviteToken
                   ? `/signup?invite=${encodeURIComponent(inviteToken)}`
-                  : "/signup"
+                  : '/signup'
               }
               className="text-primary hover:text-primary/80"
             >
