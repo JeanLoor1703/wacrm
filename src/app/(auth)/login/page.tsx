@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -13,9 +14,17 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
-import { HardHat, UsersRound } from 'lucide-react';
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  HardHat,
+  LoaderCircle,
+  LockKeyhole,
+  Mail,
+  UsersRound,
+} from 'lucide-react';
 
 // `useSearchParams` opts the component out of static prerendering
 // unless it sits under a Suspense boundary. We split the form into
@@ -40,6 +49,8 @@ function LoginPageInner() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
@@ -75,82 +86,162 @@ function LoginPageInner() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-5 pt-32 pb-10 sm:px-10 sm:pt-36">
-      <Card className="w-full max-w-md border-0 bg-white shadow-[0_24px_70px_-32px_rgba(21,21,21,0.42)] ring-1 ring-[#151515]/10">
-        <CardHeader className="px-6 pt-7 pb-2 sm:px-8">
-          <div className="bg-primary mb-4 flex h-10 w-10 items-center justify-center rounded-md text-white shadow-sm">
+    <div className="relative z-10 flex min-h-screen items-center justify-center px-5 pt-32 pb-20 sm:px-10 sm:pt-36 sm:pb-32 lg:px-12 lg:pt-28 lg:pb-28 xl:px-20">
+      <Card className="w-full max-w-[510px] rounded-[18px] border-0 bg-white py-0 shadow-[0_28px_80px_-38px_rgba(24,31,42,0.42)] ring-1 ring-[#18202b]/10">
+        <CardHeader className="px-6 pt-8 pb-3 sm:px-10 sm:pt-10">
+          <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-[#f0f2f4] text-[#ed3237] shadow-[inset_0_0_0_1px_rgba(24,32,43,0.04)]">
             {inviteToken ? (
-              <UsersRound className="h-5 w-5" />
+              <UsersRound aria-hidden="true" className="size-6" />
             ) : (
-              <HardHat className="h-5 w-5" />
+              <HardHat aria-hidden="true" className="size-6" />
             )}
           </div>
-          <p className="font-heading text-primary text-[11px] font-bold tracking-[0.22em] uppercase">
+          <p className="font-heading text-primary text-[11px] font-bold tracking-[0.28em] uppercase">
             Portal de ventas
           </p>
-          <CardTitle className="text-foreground mt-1 text-3xl leading-none font-bold uppercase">
+          <h1 className="text-foreground font-heading mt-1.5 text-[2rem] leading-none font-extrabold tracking-[-0.025em] text-balance uppercase sm:text-[2.25rem]">
             {inviteToken ? t('titleAccept') : t('titleWelcome')}
-          </CardTitle>
-          <CardDescription className="text-muted-foreground mt-2">
+          </h1>
+          <CardDescription className="text-muted-foreground mt-2 text-[15px] leading-6 sm:text-base">
             {inviteToken ? t('descAccept') : t('descWelcome')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-6 pb-7 sm:px-8">
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <CardContent className="px-6 pb-8 sm:px-10 sm:pb-10">
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
             {error && (
-              <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+              <div
+                id="login-error"
+                role="alert"
+                aria-live="polite"
+                className="rounded-lg border border-[#ed3237]/20 bg-[#ed3237]/7 px-4 py-3 text-sm leading-5 text-[#b91f25]"
+              >
                 {error}
               </div>
             )}
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="email" className="text-muted-foreground">
+              <Label
+                htmlFor="email"
+                className="text-sm font-semibold text-[#303641]"
+              >
                 {t('emailLabel')}
               </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder={t('emailPlaceholder')}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="border-border text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/20 h-11 rounded-md bg-[#f7f7f6] px-3"
-              />
+              <div className="relative">
+                <Mail
+                  aria-hidden="true"
+                  strokeWidth={1.8}
+                  className="pointer-events-none absolute top-1/2 left-4 size-[19px] -translate-y-1/2 text-[#525b68]"
+                />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  spellCheck={false}
+                  placeholder={t('emailPlaceholder')}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  aria-describedby={error ? 'login-error' : undefined}
+                  required
+                  className="h-13 rounded-lg border-[#d5d9de] bg-[#fafbfc] pr-4 pl-12 text-[#202630] shadow-[inset_0_1px_2px_rgba(18,26,36,0.03)] placeholder:text-[#9aa1aa] focus-visible:border-[#ed3237] focus-visible:ring-[#ed3237]/15"
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-muted-foreground">
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-semibold text-[#303641]"
+                >
                   {t('passwordLabel')}
                 </Label>
                 <Link
                   href="/forgot-password"
-                  className="text-primary hover:text-primary/80 text-sm"
+                  className="text-primary rounded-sm text-sm font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ed3237]"
                 >
                   {t('forgotPassword')}
                 </Link>
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder={t('passwordPlaceholder')}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="border-border text-foreground placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/20 h-11 rounded-md bg-[#f7f7f6] px-3"
-              />
+              <div className="relative">
+                <LockKeyhole
+                  aria-hidden="true"
+                  strokeWidth={1.8}
+                  className="pointer-events-none absolute top-1/2 left-4 size-[19px] -translate-y-1/2 text-[#525b68]"
+                />
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder={t('passwordPlaceholder')}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-describedby={error ? 'login-error' : undefined}
+                  required
+                  className="h-13 rounded-lg border-[#d5d9de] bg-[#fafbfc] pr-13 pl-12 text-[#202630] shadow-[inset_0_1px_2px_rgba(18,26,36,0.03)] placeholder:text-[#9aa1aa] focus-visible:border-[#ed3237] focus-visible:ring-[#ed3237]/15"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={
+                    showPassword ? t('hidePassword') : t('showPassword')
+                  }
+                  aria-pressed={showPassword}
+                  className="absolute top-1/2 right-1.5 flex size-10 touch-manipulation items-center justify-center rounded-md text-[#515a66] transition-colors hover:bg-[#eef0f2] hover:text-[#202630] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#ed3237]"
+                >
+                  {showPassword ? (
+                    <EyeOff aria-hidden="true" className="size-[19px]" />
+                  ) : (
+                    <Eye aria-hidden="true" className="size-[19px]" />
+                  )}
+                </button>
+              </div>
             </div>
+
+            <Label
+              htmlFor="remember-device"
+              className="flex w-fit cursor-pointer touch-manipulation items-center gap-3 text-sm font-medium text-[#5b6370]"
+            >
+              <Checkbox
+                id="remember-device"
+                name="remember-device"
+                checked={rememberDevice}
+                onCheckedChange={(checked) =>
+                  setRememberDevice(checked === true)
+                }
+                className="size-5 rounded-[5px]"
+              />
+              <span>{t('rememberDevice')}</span>
+            </Label>
 
             <Button
               type="submit"
               disabled={loading}
-              className="bg-primary font-heading text-primary-foreground hover:bg-primary-hover mt-2 h-11 w-full rounded-md font-bold tracking-[0.12em] uppercase disabled:opacity-50"
+              className="group bg-primary font-heading text-primary-foreground hover:bg-primary-hover mt-1 h-13 w-full rounded-lg text-[15px] font-bold tracking-[0.1em] uppercase shadow-[0_8px_22px_-12px_rgba(237,50,55,0.9)] transition-[background-color,transform,box-shadow] duration-150 active:scale-[0.98] disabled:opacity-55"
             >
-              {loading ? t('signingIn') : t('signIn')}
+              {loading ? (
+                <>
+                  <LoaderCircle
+                    aria-hidden="true"
+                    className="size-4 animate-spin motion-reduce:animate-none"
+                  />
+                  {t('signingIn')}
+                </>
+              ) : (
+                <>
+                  {t('signIn')}
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="ml-2 size-5 transition-transform duration-150 group-hover:translate-x-1 motion-reduce:transform-none"
+                  />
+                </>
+              )}
             </Button>
           </form>
 
-          <p className="text-muted-foreground mt-6 text-center text-sm">
+          <p className="text-muted-foreground mt-8 border-t border-[#d9dde1] pt-6 text-center text-sm">
             {t('noAccount')}{' '}
             <Link
               href={
@@ -158,7 +249,7 @@ function LoginPageInner() {
                   ? `/signup?invite=${encodeURIComponent(inviteToken)}`
                   : '/signup'
               }
-              className="text-primary hover:text-primary/80"
+              className="text-primary rounded-sm font-semibold underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ed3237]"
             >
               {t('createAccount')}
             </Link>
