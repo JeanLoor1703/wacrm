@@ -52,17 +52,17 @@ const trustSignals = [
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <main className="min-h-screen bg-white lg:grid lg:grid-cols-[1.1fr_0.9fr]">
-      <section className="relative hidden min-h-[720px] overflow-hidden bg-[#151515] lg:block">
+    <main className="min-h-screen bg-white lg:grid lg:h-dvh lg:grid-cols-[1.1fr_0.9fr] lg:overflow-hidden">
+      <section className="relative hidden min-h-[720px] overflow-hidden bg-[#151515] lg:block lg:h-dvh lg:min-h-0">
         <Image
           src={mixerPhoto}
           alt="Planta y camión hormigonera de CREACOM"
           fill
           priority
           sizes="55vw"
-          className="object-cover object-[56%_center]"
+          className="object-cover object-[40%_center] brightness-[1.04] saturate-[0.94]"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111214]/95 via-[#111214]/28 to-white/5" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#111214]/72 via-[#111214]/10 to-transparent" />
         <div className="absolute inset-x-0 top-0 h-52 bg-gradient-to-b from-white/35 to-transparent" />
 
         <div className="absolute top-10 left-10 xl:top-14 xl:left-16">
@@ -84,17 +84,17 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <div className="mt-3 h-[3px] w-12 bg-[#ed3237]" />
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 px-10 pb-11 xl:px-16 xl:pb-14">
-          <h2 className="font-heading max-w-[680px] text-[clamp(2.45rem,4vw,4.5rem)] leading-[0.91] font-extrabold tracking-[-0.035em] text-balance text-white uppercase drop-shadow-lg">
+        <div className="absolute inset-x-0 bottom-0 px-10 pb-9 xl:px-16 xl:pb-12">
+          <h2 className="font-heading max-w-[540px] text-[clamp(2rem,3.35vw,3.5rem)] leading-[0.93] font-extrabold tracking-[-0.035em] text-balance text-white uppercase drop-shadow-lg">
             El control comercial del hormigón, en un solo lugar.
           </h2>
           <div className="mt-5 h-[5px] w-16 bg-[#ed3237]" />
-          <p className="mt-5 max-w-[540px] text-base leading-7 text-pretty text-white/88 xl:text-lg">
+          <p className="mt-4 max-w-[440px] text-[15px] leading-6 text-pretty text-white/88 xl:text-base">
             Seguimiento de clientes, obras, cotizaciones y conversaciones para
             el equipo de CREACOM Hormigonera.
           </p>
 
-          <div className="mt-7 grid max-w-[760px] grid-cols-4 gap-0 border-y border-white/20 py-4">
+          <div className="mt-6 grid max-w-[690px] grid-cols-4 gap-0 border-y border-white/20 py-3.5">
             {heroBenefits.map(({ icon: Icon, title, detail }, index) => (
               <div
                 key={title}

@@ -86,9 +86,9 @@ function LoginPageInner() {
   };
 
   return (
-    <div className="relative z-10 flex min-h-screen items-center justify-center px-5 pt-32 pb-20 sm:px-10 sm:pt-36 sm:pb-32 lg:px-12 lg:pt-28 lg:pb-28 xl:px-20">
+    <div className="relative z-10 flex min-h-screen items-center justify-center px-5 pt-32 pb-20 sm:px-10 sm:pt-36 sm:pb-32 lg:h-full lg:min-h-0 lg:overflow-hidden lg:px-12 lg:py-7 xl:px-20 xl:py-10">
       <Card className="w-full max-w-[510px] rounded-[18px] border-0 bg-white py-0 shadow-[0_28px_80px_-38px_rgba(24,31,42,0.42)] ring-1 ring-[#18202b]/10">
-        <CardHeader className="px-6 pt-8 pb-3 sm:px-10 sm:pt-10">
+        <CardHeader className="px-6 pt-7 pb-3 sm:px-10 sm:pt-8 lg:px-8 lg:pt-7">
           <div className="mb-4 flex size-12 items-center justify-center rounded-xl bg-[#f0f2f4] text-[#ed3237] shadow-[inset_0_0_0_1px_rgba(24,32,43,0.04)]">
             {inviteToken ? (
               <UsersRound aria-hidden="true" className="size-6" />
@@ -106,8 +106,8 @@ function LoginPageInner() {
             {inviteToken ? t('descAccept') : t('descWelcome')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-6 pb-8 sm:px-10 sm:pb-10">
-          <form onSubmit={handleLogin} className="flex flex-col gap-5">
+        <CardContent className="px-6 pb-7 sm:px-10 sm:pb-8 lg:px-8 lg:pb-7">
+          <form onSubmit={handleLogin} className="flex flex-col gap-4.5">
             {error && (
               <div
                 id="login-error"
@@ -189,7 +189,7 @@ function LoginPageInner() {
                     showPassword ? t('hidePassword') : t('showPassword')
                   }
                   aria-pressed={showPassword}
-                  className="absolute top-1/2 right-1.5 flex size-10 touch-manipulation items-center justify-center rounded-md text-[#515a66] transition-colors hover:bg-[#eef0f2] hover:text-[#202630] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#ed3237]"
+                  className="absolute top-1/2 right-1.5 flex size-10 touch-manipulation items-center justify-center rounded-md border border-[#d5d9de] bg-white text-[#515a66] shadow-[0_1px_2px_rgba(18,26,36,0.04)] transition-[background-color,color,border-color] duration-150 hover:border-[#b8bec6] hover:bg-[#f3f5f6] hover:text-[#202630] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#ed3237]"
                 >
                   {showPassword ? (
                     <EyeOff aria-hidden="true" className="size-[19px]" />
