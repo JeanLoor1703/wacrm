@@ -88,29 +88,26 @@ function LoginPageInner() {
   return (
     <div className="relative z-10 flex min-h-screen items-center justify-center px-5 pt-28 pb-8 sm:px-10 sm:pt-28 sm:pb-8 lg:h-full lg:min-h-0 lg:overflow-hidden lg:px-12 lg:py-7 xl:px-20 xl:py-10">
       <Card className="w-full max-w-[510px] rounded-[18px] border-0 bg-white py-0 shadow-[0_28px_80px_-38px_rgba(24,31,42,0.42)] ring-1 ring-[#18202b]/10">
-        <CardHeader className="px-5 pt-5 pb-2 sm:px-7 sm:pt-5 lg:px-8 lg:pt-7 lg:pb-3">
-          <div className="mb-3 flex size-10 items-center justify-center rounded-[10px] bg-[#f0f2f4] text-[#ed3237] shadow-[inset_0_0_0_1px_rgba(24,32,43,0.04)] lg:mb-4 lg:size-12 lg:rounded-xl">
+        <CardHeader className="px-5 pt-5 pb-2 sm:px-7 sm:pt-5">
+          <div className="mb-3 flex size-10 items-center justify-center rounded-[10px] bg-[#f0f2f4] text-[#ed3237] shadow-[inset_0_0_0_1px_rgba(24,32,43,0.04)]">
             {inviteToken ? (
-              <UsersRound aria-hidden="true" className="size-5 lg:size-6" />
+              <UsersRound aria-hidden="true" className="size-5" />
             ) : (
-              <HardHat aria-hidden="true" className="size-5 lg:size-6" />
+              <HardHat aria-hidden="true" className="size-5" />
             )}
           </div>
-          <p className="font-heading text-primary text-[10px] font-bold tracking-[0.25em] uppercase lg:text-[11px] lg:tracking-[0.28em]">
+          <p className="font-heading text-primary text-[10px] font-bold tracking-[0.25em] uppercase">
             Portal de ventas
           </p>
-          <h1 className="text-foreground font-heading mt-1 text-[1.75rem] leading-none font-extrabold tracking-[-0.025em] text-balance uppercase sm:text-[2rem] lg:mt-1.5 lg:text-[2.25rem]">
+          <h1 className="text-foreground font-heading mt-1 text-[1.75rem] leading-none font-extrabold tracking-[-0.025em] text-balance uppercase sm:text-[2rem]">
             {inviteToken ? t('titleAccept') : t('titleWelcome')}
           </h1>
-          <CardDescription className="text-muted-foreground mt-1.5 text-[14px] leading-5 sm:text-[15px] lg:mt-2 lg:text-base lg:leading-6">
+          <CardDescription className="text-muted-foreground mt-1.5 text-[14px] leading-5 sm:text-[15px]">
             {inviteToken ? t('descAccept') : t('descWelcome')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-5 pb-5 sm:px-7 sm:pb-5 lg:px-8 lg:pb-7">
-          <form
-            onSubmit={handleLogin}
-            className="flex flex-col gap-3.5 lg:gap-4.5"
-          >
+        <CardContent className="px-5 pb-5 sm:px-7 sm:pb-5">
+          <form onSubmit={handleLogin} className="flex flex-col gap-3.5">
             {error && (
               <div
                 id="login-error"
@@ -122,10 +119,10 @@ function LoginPageInner() {
               </div>
             )}
 
-            <div className="flex flex-col gap-1.5 lg:gap-2">
+            <div className="flex flex-col gap-1.5">
               <Label
                 htmlFor="email"
-                className="text-[13px] font-semibold text-[#303641] lg:text-sm"
+                className="text-[13px] font-semibold text-[#303641]"
               >
                 {t('emailLabel')}
               </Label>
@@ -147,22 +144,22 @@ function LoginPageInner() {
                   onChange={(e) => setEmail(e.target.value)}
                   aria-describedby={error ? 'login-error' : undefined}
                   required
-                  className="h-12 rounded-lg border-[#d5d9de] bg-[#fafbfc] pr-4 pl-12 text-[#202630] shadow-[inset_0_1px_2px_rgba(18,26,36,0.03)] placeholder:text-[#9aa1aa] focus-visible:border-[#ed3237] focus-visible:ring-[#ed3237]/15 lg:h-13"
+                  className="h-12 rounded-lg border-[#d5d9de] bg-[#fafbfc] pr-4 pl-12 text-[#202630] shadow-[inset_0_1px_2px_rgba(18,26,36,0.03)] placeholder:text-[#9aa1aa] focus-visible:border-[#ed3237] focus-visible:ring-[#ed3237]/15"
                 />
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5 lg:gap-2">
+            <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <Label
                   htmlFor="password"
-                  className="text-[13px] font-semibold text-[#303641] lg:text-sm"
+                  className="text-[13px] font-semibold text-[#303641]"
                 >
                   {t('passwordLabel')}
                 </Label>
                 <Link
                   href="/forgot-password"
-                  className="text-primary rounded-sm text-[13px] font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ed3237] lg:text-sm"
+                  className="text-primary rounded-sm text-[13px] font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#ed3237]"
                 >
                   {t('forgotPassword')}
                 </Link>
@@ -183,7 +180,7 @@ function LoginPageInner() {
                   onChange={(e) => setPassword(e.target.value)}
                   aria-describedby={error ? 'login-error' : undefined}
                   required
-                  className="h-12 rounded-lg border-[#d5d9de] bg-[#fafbfc] pr-13 pl-12 text-[#202630] shadow-[inset_0_1px_2px_rgba(18,26,36,0.03)] placeholder:text-[#9aa1aa] focus-visible:border-[#ed3237] focus-visible:ring-[#ed3237]/15 lg:h-13"
+                  className="h-12 rounded-lg border-[#d5d9de] bg-[#fafbfc] pr-13 pl-12 text-[#202630] shadow-[inset_0_1px_2px_rgba(18,26,36,0.03)] placeholder:text-[#9aa1aa] focus-visible:border-[#ed3237] focus-visible:ring-[#ed3237]/15"
                 />
                 <button
                   type="button"
@@ -205,7 +202,7 @@ function LoginPageInner() {
 
             <Label
               htmlFor="remember-device"
-              className="flex w-fit cursor-pointer touch-manipulation items-center gap-3 text-[13px] font-medium text-[#5b6370] lg:text-sm"
+              className="flex w-fit cursor-pointer touch-manipulation items-center gap-3 text-[13px] font-medium text-[#5b6370]"
             >
               <Checkbox
                 id="remember-device"
@@ -222,7 +219,7 @@ function LoginPageInner() {
             <Button
               type="submit"
               disabled={loading}
-              className="group bg-primary font-heading text-primary-foreground hover:bg-primary-hover mt-1 h-12 w-full rounded-lg text-[14px] font-bold tracking-[0.1em] uppercase shadow-[0_8px_22px_-12px_rgba(237,50,55,0.9)] transition-[background-color,transform,box-shadow] duration-150 active:scale-[0.98] disabled:opacity-55 lg:h-13 lg:text-[15px]"
+              className="group bg-primary font-heading text-primary-foreground hover:bg-primary-hover mt-1 h-12 w-full rounded-lg text-[14px] font-bold tracking-[0.1em] uppercase shadow-[0_8px_22px_-12px_rgba(237,50,55,0.9)] transition-[background-color,transform,box-shadow] duration-150 active:scale-[0.98] disabled:opacity-55"
             >
               {loading ? (
                 <>
@@ -244,7 +241,7 @@ function LoginPageInner() {
             </Button>
           </form>
 
-          <p className="text-muted-foreground mt-5 border-t border-[#d9dde1] pt-4 text-center text-[13px] lg:mt-8 lg:pt-6 lg:text-sm">
+          <p className="text-muted-foreground mt-5 border-t border-[#d9dde1] pt-4 text-center text-[13px]">
             {t('noAccount')}{' '}
             <Link
               href={
