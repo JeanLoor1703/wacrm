@@ -305,7 +305,7 @@
   "Contacts": {
     "page": {
       "title": "Clientes y obras",
-      "subtitle": "Gestiona tu cartera comercial. {count} clientes registrados.",
+      "subtitle": "Gestiona tu cartera comercial. {count} {count, plural, =1 {cliente registrado} other {clientes registrados}}.",
       "subtitleZero": "Gestiona clientes, constructoras y obras.",
       "customFieldsBtn": "Campos personalizados",
       "importBtn": "Importar",
