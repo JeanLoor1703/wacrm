@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { useCan } from '@/hooks/use-can';
 import { CURRENCIES } from '@/lib/currency';
 import {
   pendingFields,
@@ -106,6 +107,8 @@ export function DealForm({
   const t = useTranslations('Pipelines.form');
   const db = createClient();
   const { accountId, defaultCurrency } = useAuth();
+  const canWrite = useCan('send-messages');
+  const errorRef = useRef<HTMLParagraphElement>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [tab, setTab] = useState<string>('commercial');
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -115,6 +118,7 @@ export function DealForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  useEffect(() => { if (error) errorRef.current?.focus(); }, [error]);
 
   const firstStageId = stages[0]?.id || '';
   useEffect(() => {
@@ -208,7 +212,7 @@ export function DealForm({
     setError(null);
   }
   async function handleSave() {
-    if (!draft || saving) return;
+    if (!draft || saving || !canWrite) return;
     const payload = {
       ...draft,
       pipeline_id: pipelineId,
@@ -284,7 +288,7 @@ export function DealForm({
     }
   }
   async function handleStatus(status: DealStatus) {
-    if (!deal || saving) return;
+    if (!deal || saving || !canWrite) return;
     if (commercial) {
       const target = stages.find((s) => stageStatus(s.semantic_key) === status);
       if (target) {
@@ -309,7 +313,7 @@ export function DealForm({
     onOpenChange(false);
   }
   async function handleDelete() {
-    if (!deal || saving) return;
+    if (!deal || saving || !canWrite) return;
     setSaving(true);
     const { error } = await db
       .from('deals')
@@ -341,6 +345,7 @@ export function DealForm({
     <Field id={`work-${key}`} label={label}>
       <Input
         id={`work-${key}`}
+        name={key}
         type={type}
         value={draft?.[key] ?? ''}
         onChange={(e) => change(key, e.target.value)}
@@ -356,7 +361,7 @@ export function DealForm({
         if (!saving) onOpenChange(next);
       }}
     >
-      <SheetContent side="right" className="bg-popover w-full p-0 sm:max-w-2xl">
+      <SheetContent side="right" className="bg-popover w-full gap-0 p-0 sm:max-w-2xl">
         <SheetHeader className="border-border/50 shrink-0 border-b p-4 pr-12">
           <SheetTitle>
             {commercial
@@ -375,6 +380,7 @@ export function DealForm({
         </SheetHeader>
         {draft && (
           <>
+            <form id="opportunity-form" noValidate className="flex min-h-0 flex-1 flex-col" onSubmit={(event) => { event.preventDefault(); void handleSave(); }}>
             <Tabs
               value={tab}
               onValueChange={(v) => setTab(String(v))}
@@ -397,11 +403,15 @@ export function DealForm({
                 {error && (
                   <p
                     role="alert"
+                    ref={errorRef}
+                    tabIndex={-1}
                     className="bg-destructive/10 text-destructive mb-4 rounded-lg p-3 text-sm"
                   >
                     {error}
                   </p>
                 )}
+                {!canWrite && <p className="mb-4 text-sm text-muted-foreground">Sólo lectura: tu rol no permite modificar oportunidades.</p>}
+                <fieldset disabled={saving || !canWrite} className="min-w-0 space-y-4">
                 <TabsContent value="commercial" className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field id="work-contact_id" label="Cliente *">
@@ -630,6 +640,7 @@ export function DealForm({
                   {deal && (
                     <div className="flex flex-wrap gap-2">
                       <Button
+                        type="button"
                         variant="outline"
                         disabled={saving}
                         onClick={() => handleStatus('won')}
@@ -637,6 +648,7 @@ export function DealForm({
                         Ganado
                       </Button>
                       <Button
+                        type="button"
                         variant="outline"
                         disabled={saving}
                         onClick={() => handleStatus('lost')}
@@ -645,6 +657,7 @@ export function DealForm({
                       </Button>
                       {deal.status !== 'open' && (
                         <Button
+                          type="button"
                           variant="ghost"
                           disabled={saving}
                           onClick={() => handleStatus('open')}
@@ -660,8 +673,10 @@ export function DealForm({
                     </div>
                   )}
                 </TabsContent>
+                </fieldset>
               </div>
             </Tabs>
+            </form>
             <div className="border-border/50 bg-popover shrink-0 space-y-3 border-t p-4">
               <div className="flex gap-2">
                 <Button
@@ -674,8 +689,9 @@ export function DealForm({
                 </Button>
                 <Button
                   className="flex-1"
-                  disabled={saving}
-                  onClick={handleSave}
+                  disabled={saving || !canWrite}
+                  type="submit"
+                  form="opportunity-form"
                 >
                   {saving
                     ? 'Guardando…'
@@ -684,7 +700,7 @@ export function DealForm({
                       : 'Crear oportunidad'}
                 </Button>
               </div>
-              {deal &&
+              {deal && canWrite &&
                 (confirmDelete ? (
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <span>¿Eliminar esta oportunidad?</span>
