@@ -117,6 +117,7 @@ export function PipelineSettings({
       name: s.name,
       color: s.color,
       position: i,
+      semantic_key: s.semantic_key ?? null,
     }));
 
     const [renameRes, stagesRes] = await Promise.all([

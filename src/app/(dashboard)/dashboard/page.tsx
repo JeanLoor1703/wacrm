@@ -39,6 +39,7 @@ export default function DashboardPage() {
   const { defaultCurrency } = useAuth();
   const [metrics, setMetrics] = useState<MetricsBundle | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
+  const [commercialAvailable, setCommercialAvailable] = useState(false);
 
   const [range, setRange] = useState<RangeDays>(30);
   // Keep a cache per range so switching tabs doesn't re-fetch what we
@@ -137,7 +138,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <CommercialMetrics />
+      <CommercialMetrics onAvailable={setCommercialAvailable} />
       <h2 className="text-lg font-semibold">Conversaciones y contactos · información secundaria</h2>
       {/* Metric cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -174,12 +175,12 @@ export default function DashboardPage() {
                 ),
               }}
             />
-            <MetricCard
+            {!commercialAvailable && <MetricCard
               title={t('openDealsValue')}
               value={formatCurrency(metrics.openDealsValue, defaultCurrency)}
               icon={DollarSign}
               subtitle={t('openDeals', { count: metrics.openDealsCount })}
-            />
+            />}
             <MetricCard
               title={t('messagesSentToday')}
               value={metrics.messagesSentToday.current.toLocaleString()}
@@ -219,13 +220,13 @@ export default function DashboardPage() {
             onRangeChange={handleRangeChange}
           />
         </div>
-        <div className="h-full lg:col-span-2">
+        {!commercialAvailable && <div className="h-full lg:col-span-2">
           <PipelineDonut
             data={pipeline}
             loading={pipelineLoading}
             currency={defaultCurrency}
           />
-        </div>
+        </div>}
       </div>
 
       {/* Response time */}
