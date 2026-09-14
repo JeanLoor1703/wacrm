@@ -349,6 +349,9 @@ export interface MessageTemplate {
 }
 
 export interface Pipeline {
+  account_id?: string;
+  model_key?: 'creacom' | null;
+  is_demo?: boolean;
   id: string;
   user_id: string;
   name: string;
@@ -356,6 +359,7 @@ export interface Pipeline {
 }
 
 export interface PipelineStage {
+  semantic_key?: CommercialStageKey | null;
   id: string;
   pipeline_id: string;
   name: string;
@@ -365,8 +369,30 @@ export interface PipelineStage {
 }
 
 export type DealStatus = 'open' | 'won' | 'lost';
+export type CommercialStageKey = 'new' | 'qualifying' | 'ready_to_quote' | 'quote_sent' | 'negotiation' | 'won' | 'not_converted';
+export type UnknownBoolean = 'yes' | 'no' | 'unknown';
+export type ConcreteStrength = 'H-180' | 'H-210' | 'H-240' | 'H-280' | 'other' | 'unknown';
+export interface DealLossReason {
+  id: string;
+  account_id: string;
+  code: string;
+  name: string;
+  is_active: boolean;
+  requires_detail: boolean;
+}
 
 export interface Deal {
+  account_id?: string;
+  work_type?: string | null;
+  work_location?: string | null;
+  concrete_strength?: ConcreteStrength;
+  concrete_strength_other?: string | null;
+  estimated_volume_m3?: number | null;
+  scheduled_date?: string | null;
+  needs_pump?: UnknownBoolean;
+  mixer_access?: UnknownBoolean;
+  loss_reason_id?: string | null;
+  loss_reason_detail?: string | null;
   id: string;
   user_id: string;
   pipeline_id: string;
