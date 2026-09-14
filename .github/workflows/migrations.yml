@@ -64,6 +64,8 @@ jobs:
       # just the absence of an error.
       - name: Verify the resulting schema
         run: supabase db query --local --file supabase/ci/verify-schema.sql
+      - name: Mirror legacy hosted CRUD grants in local stack
+        run: supabase db query --local --file supabase/ci/legacy-api-grants.sql
       - name: SQL validation, RLS and aggregation tests
         run: supabase test db --local supabase/tests/creacom.test.sql
       - name: Provision isolated local QA credentials

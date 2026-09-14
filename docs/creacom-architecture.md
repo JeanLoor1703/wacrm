@@ -128,6 +128,10 @@ Archivos nuevos fueron creados con Supabase CLI 2.113.0 `migration new`.
 ## Pruebas y CI
 
 Node 24 alineado con Vercel, npm ci/lockfile y caché npm. CI ejecuta lint,
+`next typegen` antes de TypeScript para el checkout limpio. Un bootstrap exclusivo
+de CI reproduce los grants CRUD que 001–041 asumían del dashboard alojado;
+no se aplica a Supabase remoto y mantiene RLS. La carga segura de entorno usa
+`scripts/run-with-env.mjs` para no propagar `--env-file` a workers de Node.
 TypeScript, Vitest y build. Workflow Migrations siempre corre en PR/main sin filtros
 de archivos: Supabase temporal (Postgres 17 + Auth + Data API), reset, schema smoke,
 pgTAP, fixture QA, build y Playwright Chromium con un worker. No usa proyectos

@@ -141,7 +141,7 @@ export default function DashboardPage() {
       <CommercialMetrics onAvailable={setCommercialAvailable} />
       <h2 className="text-lg font-semibold">Conversaciones y contactos · información secundaria</h2>
       {/* Metric cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${commercialAvailable ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
         {metricsLoading || !metrics ? (
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
@@ -212,7 +212,7 @@ export default function DashboardPage() {
           this, the pipeline card rendered at its natural (shorter)
           height while the line chart drove the row height. */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="h-full lg:col-span-3">
+        <div className={`h-full ${commercialAvailable ? 'lg:col-span-5' : 'lg:col-span-3'}`}>
           <ConversationsChart
             series={series}
             loading={seriesLoading}
