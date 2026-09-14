@@ -69,19 +69,19 @@ jobs:
       - name: Provision isolated local QA credentials
         run: |
           supabase status -o env > .env.supabase-ci
-          node --env-file=.env.supabase-ci scripts/seed-e2e.mjs --local
+          node scripts/run-with-env.mjs .env.supabase-ci scripts/seed-e2e.mjs --local
       - name: Build against temporary Supabase
         env:
           ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
           META_APP_SECRET: ci-dummy-meta-secret
-        run: node --env-file=.env.e2e.local node_modules/next/dist/bin/next build
+        run: node scripts/run-with-env.mjs .env.e2e.local node_modules/next/dist/bin/next build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Run sequential commercial smoke
         env:
           ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
           META_APP_SECRET: ci-dummy-meta-secret
-        run: node --env-file=.env.e2e.local node_modules/@playwright/test/cli.js test
+        run: node scripts/run-with-env.mjs .env.e2e.local node_modules/@playwright/test/cli.js test
       - name: Stop temporary services
         if: always()
         run: supabase stop --no-backup
