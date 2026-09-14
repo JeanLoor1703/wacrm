@@ -41,6 +41,8 @@ import {
   LayoutTemplate,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { opportunityHref, strengthLabel } from '@/lib/creacom/model';
 
 interface ContactDetailViewProps {
   open: boolean;
@@ -173,7 +175,7 @@ export function ContactDetailView({
     setLoadingDeals(true);
     const { data } = await supabase
       .from('deals')
-      .select('*, stage:pipeline_stages(*)')
+      .select('*, stage:pipeline_stages!deals_stage_id_fkey(*)')
       .eq('contact_id', contactId)
       .order('created_at', { ascending: false });
     setDeals((data ?? []) as Deal[]);
@@ -704,9 +706,9 @@ export function ContactDetailView({
                         className="rounded-lg border border-border bg-muted/50 p-3"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-foreground">
+                          <Link href={opportunityHref(deal)} onClick={() => onOpenChange(false)} className="text-sm font-medium text-foreground underline decoration-primary/50 underline-offset-4 focus-visible:outline-2 focus-visible:outline-primary">
                             {deal.title}
-                          </p>
+                          </Link>
                           {deal.stage && (
                             <span
                               className="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
@@ -719,6 +721,7 @@ export function ContactDetailView({
                             </span>
                           )}
                         </div>
+                        <p className="mt-2 text-xs text-muted-foreground">{deal.work_location || 'Ubicación por confirmar'} · {deal.estimated_volume_m3 == null ? 'Volumen pendiente' : `${deal.estimated_volume_m3} m³`} · {strengthLabel(deal)}</p>
                         <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <DollarSign className="size-3" />
@@ -735,7 +738,7 @@ export function ContactDetailView({
                                   : 'text-red-400'
                               }
                             >
-                              {deal.status}
+                              {deal.status === 'won' ? 'Ganado' : 'No concretado'}
                             </span>
                           )}
                         </div>

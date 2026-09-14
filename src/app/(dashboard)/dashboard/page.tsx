@@ -28,6 +28,7 @@ import { ConversationsChart } from '@/components/dashboard/conversations-chart';
 import { PipelineDonut } from '@/components/dashboard/pipeline-donut';
 import { ResponseTimeChart } from '@/components/dashboard/response-time-chart';
 import { ActivityFeed } from '@/components/dashboard/activity-feed';
+import { CommercialMetrics } from '@/components/dashboard/commercial-metrics';
 
 import { useTranslations } from 'next-intl';
 
@@ -136,6 +137,8 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      <CommercialMetrics />
+      <h2 className="text-lg font-semibold">Conversaciones y contactos · información secundaria</h2>
       {/* Metric cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {metricsLoading || !metrics ? (

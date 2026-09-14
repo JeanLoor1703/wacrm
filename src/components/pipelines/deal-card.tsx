@@ -4,6 +4,7 @@ import type { Deal, PipelineStage } from "@/types";
 import { Calendar, Check, X } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { useTranslations } from "next-intl";
+import { pendingFields, strengthLabel } from '@/lib/creacom/model';
 
 interface DealCardProps {
   deal: Deal;
@@ -13,7 +14,7 @@ interface DealCardProps {
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return new Date(`${dateStr}T12:00:00`).toLocaleDateString("es-EC", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -67,7 +68,7 @@ export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
         {deal.status === "lost" && (
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-400">
             <X className="h-3 w-3" />
-            {t("lost")}
+            {stage?.semantic_key === 'not_converted' ? 'No concretado' : t("lost")}
           </span>
         )}
       </div>
@@ -80,6 +81,12 @@ export function DealCard({ deal, stage, onEdit, isOverlay }: DealCardProps) {
         <span className="truncate text-xs text-muted-foreground">{contactLabel}</span>
       </div>
 
+      {stage?.semantic_key && <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+        <p className="break-words">{deal.work_location || 'Ubicación por confirmar'}</p>
+        <p className="tabular-nums">{deal.estimated_volume_m3 == null ? 'Volumen pendiente' : `${deal.estimated_volume_m3} m³`} · {strengthLabel(deal)}</p>
+        {deal.scheduled_date && <p>Entrega: {formatDate(deal.scheduled_date)}</p>}
+        <p>{pendingFields(deal).length} datos por confirmar</p>
+      </div>}
       <div className="mt-2 flex items-center justify-between">
         <span className="text-sm font-bold text-primary">
           {formatCurrency(deal.value, deal.currency)}

@@ -225,9 +225,10 @@ function StageColumn({
           {deals.length}
         </span>
       </div>
-      <p className="text-xs text-muted-foreground">
-        {formatCurrency(totalValue, currency)}
-      </p>
+      <div className="text-xs text-muted-foreground">
+        {stage.semantic_key ? [...new Set(deals.map(d => d.currency || currency))].map(code =>
+          <p key={code}>{formatCurrency(deals.filter(d => (d.currency || currency) === code).reduce((sum,d) => sum+Number(d.value || 0),0),code)}</p>) : <p>{formatCurrency(totalValue, currency)}</p>}
+      </div>
 
       <div
         ref={setNodeRef}
