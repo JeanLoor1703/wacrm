@@ -1,5 +1,5 @@
-import type { AccountRole } from "@/lib/auth/roles";
-import type { InteractiveMessagePayload } from "@/lib/whatsapp/interactive";
+import type { AccountRole } from '@/lib/auth/roles';
+import type { InteractiveMessagePayload } from '@/lib/whatsapp/interactive';
 
 export type {
   InteractiveMessagePayload,
@@ -8,7 +8,7 @@ export type {
   InteractiveButton,
   InteractiveListRow,
   InteractiveListSection,
-} from "@/lib/whatsapp/interactive";
+} from '@/lib/whatsapp/interactive';
 
 export interface Profile {
   id: string;
@@ -87,7 +87,7 @@ export interface AccountInvitation {
   id: string;
   account_id: string;
   /** Roles offered via invite — owner is never offered. */
-  role: Exclude<AccountRole, "owner">;
+  role: Exclude<AccountRole, 'owner'>;
   created_by_user_id: string | null;
   label: string | null;
   created_at: string;
@@ -216,7 +216,8 @@ export type ContentType =
   | 'template'
   /** Customer tapped a reply button or list row on a message we sent. */
   | 'interactive';
-export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+export type MessageStatus =
+  'sending' | 'sent' | 'delivered' | 'read' | 'failed';
 
 export interface Message {
   id: string;
@@ -349,6 +350,9 @@ export interface MessageTemplate {
 }
 
 export interface Pipeline {
+  account_id?: string;
+  model_key?: 'creacom' | null;
+  is_demo?: boolean;
   id: string;
   user_id: string;
   name: string;
@@ -356,6 +360,7 @@ export interface Pipeline {
 }
 
 export interface PipelineStage {
+  semantic_key?: CommercialStageKey | null;
   id: string;
   pipeline_id: string;
   name: string;
@@ -365,8 +370,38 @@ export interface PipelineStage {
 }
 
 export type DealStatus = 'open' | 'won' | 'lost';
+export type CommercialStageKey =
+  | 'new'
+  | 'qualifying'
+  | 'ready_to_quote'
+  | 'quote_sent'
+  | 'negotiation'
+  | 'won'
+  | 'not_converted';
+export type UnknownBoolean = 'yes' | 'no' | 'unknown';
+export type ConcreteStrength =
+  'H-180' | 'H-210' | 'H-240' | 'H-280' | 'other' | 'unknown';
+export interface DealLossReason {
+  id: string;
+  account_id: string;
+  code: string;
+  name: string;
+  is_active: boolean;
+  requires_detail: boolean;
+}
 
 export interface Deal {
+  account_id?: string;
+  work_type?: string | null;
+  work_location?: string | null;
+  concrete_strength?: ConcreteStrength;
+  concrete_strength_other?: string | null;
+  estimated_volume_m3?: number | null;
+  scheduled_date?: string | null;
+  needs_pump?: UnknownBoolean;
+  mixer_access?: UnknownBoolean;
+  loss_reason_id?: string | null;
+  loss_reason_detail?: string | null;
   id: string;
   user_id: string;
   pipeline_id: string;
@@ -391,8 +426,10 @@ export interface Deal {
   assignee?: Profile;
 }
 
-export type BroadcastStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
-export type RecipientStatus = 'pending' | 'sent' | 'delivered' | 'read' | 'replied' | 'failed';
+export type BroadcastStatus =
+  'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
+export type RecipientStatus =
+  'pending' | 'sent' | 'delivered' | 'read' | 'replied' | 'failed';
 
 export interface Broadcast {
   id: string;
@@ -574,10 +611,7 @@ export interface WaitStepConfig {
 }
 
 export type ConditionSubject =
-  | 'contact_field'
-  | 'tag_presence'
-  | 'message_content'
-  | 'time_of_day';
+  'contact_field' | 'tag_presence' | 'message_content' | 'time_of_day';
 
 export interface ConditionStepConfig {
   subject: ConditionSubject;

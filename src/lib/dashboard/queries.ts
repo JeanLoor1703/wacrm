@@ -283,7 +283,7 @@ export async function loadActivity(db: DB, limit = 20): Promise<ActivityItem[]> 
       .limit(10),
     db
       .from('deals')
-      .select('id, title, updated_at, stage:pipeline_stages(name)')
+      .select('id, title, updated_at, stage:pipeline_stages!deals_stage_id_fkey(name)')
       .order('updated_at', { ascending: false })
       .limit(10),
     db

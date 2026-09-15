@@ -42,6 +42,10 @@ BEGIN
     RAISE EXCEPTION 'public.accounts is missing — migration 017 did not apply';
   END IF;
 
+  IF to_regclass('public.deal_loss_reasons') IS NULL OR
+     to_regprocedure('public.creacom_metrics(uuid)') IS NULL THEN
+    RAISE EXCEPTION 'CREACOM model or metrics RPC is missing';
+  END IF;
   RAISE NOTICE 'schema verification passed';
 END
 $$;

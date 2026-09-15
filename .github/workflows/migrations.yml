@@ -15,21 +15,9 @@ name: Migrations
 
 on:
   pull_request:
-    # `supabase/**` rather than `supabase/migrations/**` so a change to
-    # config.toml re-runs the check too, and this workflow is listed so
-    # that edits to the check are validated by the check.
-    #
-    # NOTE: if this is ever made a REQUIRED status check, drop these
-    # filters. GitHub leaves a required check that never ran stuck as
-    # "expected", which blocks every PR that doesn't touch SQL.
-    paths:
-      - 'supabase/**'
-      - '.github/workflows/migrations.yml'
+    branches: [main]
   push:
     branches: [main]
-    paths:
-      - 'supabase/**'
-      - '.github/workflows/migrations.yml'
 
 concurrency:
   group: migrations-${{ github.ref }}
@@ -37,10 +25,16 @@ concurrency:
 
 jobs:
   apply:
-    name: Apply to a clean database
+    name: Database and Chromium smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
 
       - name: Install the Supabase CLI
         uses: supabase/setup-cli@v1
@@ -50,8 +44,9 @@ jobs:
           # bump in a PR, not a Tuesday where main goes red.
           version: 2.113.0
 
-      - name: Start Postgres
-        run: supabase db start
+      - name: Start temporary Supabase (Auth and Data API)
+        # CLI status includes local test keys: keep them out of logs/artifacts.
+        run: supabase start -x studio,edge-runtime,logflare,vector,supavisor,postgres-meta,imgproxy > /tmp/supabase-start.log 2>&1
 
       # `db start` already applies the migrations on a cold volume, but
       # only on a cold volume — it is a no-op against a database that
@@ -69,3 +64,26 @@ jobs:
       # just the absence of an error.
       - name: Verify the resulting schema
         run: supabase db query --local --file supabase/ci/verify-schema.sql
+      - name: Mirror legacy hosted CRUD grants in local stack
+        run: supabase db query --local --file supabase/ci/legacy-api-grants.sql
+      - name: SQL validation, RLS and aggregation tests
+        run: supabase test db --local supabase/tests/creacom.test.sql
+      - name: Provision isolated local QA credentials
+        run: |
+          supabase status -o env > .env.supabase-ci
+          node scripts/run-with-env.mjs .env.supabase-ci scripts/seed-e2e.mjs --local
+      - name: Build against temporary Supabase
+        env:
+          ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+          META_APP_SECRET: ci-dummy-meta-secret
+        run: node scripts/run-with-env.mjs .env.e2e.local node_modules/next/dist/bin/next build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run sequential commercial smoke
+        env:
+          ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+          META_APP_SECRET: ci-dummy-meta-secret
+        run: node scripts/run-with-env.mjs .env.e2e.local node_modules/@playwright/test/cli.js test
+      - name: Stop temporary services
+        if: always()
+        run: supabase stop --no-backup

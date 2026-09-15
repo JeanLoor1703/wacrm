@@ -28,6 +28,7 @@ import { ConversationsChart } from '@/components/dashboard/conversations-chart';
 import { PipelineDonut } from '@/components/dashboard/pipeline-donut';
 import { ResponseTimeChart } from '@/components/dashboard/response-time-chart';
 import { ActivityFeed } from '@/components/dashboard/activity-feed';
+import { CommercialMetrics } from '@/components/dashboard/commercial-metrics';
 
 import { useTranslations } from 'next-intl';
 
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const { defaultCurrency } = useAuth();
   const [metrics, setMetrics] = useState<MetricsBundle | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
+  const [commercialAvailable, setCommercialAvailable] = useState(false);
 
   const [range, setRange] = useState<RangeDays>(30);
   // Keep a cache per range so switching tabs doesn't re-fetch what we
@@ -136,8 +138,10 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      <CommercialMetrics onAvailable={setCommercialAvailable} />
+      <h2 className="text-lg font-semibold">Conversaciones y contactos · información secundaria</h2>
       {/* Metric cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${commercialAvailable ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}>
         {metricsLoading || !metrics ? (
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
@@ -171,12 +175,12 @@ export default function DashboardPage() {
                 ),
               }}
             />
-            <MetricCard
+            {!commercialAvailable && <MetricCard
               title={t('openDealsValue')}
               value={formatCurrency(metrics.openDealsValue, defaultCurrency)}
               icon={DollarSign}
               subtitle={t('openDeals', { count: metrics.openDealsCount })}
-            />
+            />}
             <MetricCard
               title={t('messagesSentToday')}
               value={metrics.messagesSentToday.current.toLocaleString()}
@@ -208,7 +212,7 @@ export default function DashboardPage() {
           this, the pipeline card rendered at its natural (shorter)
           height while the line chart drove the row height. */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="h-full lg:col-span-3">
+        <div className={`h-full ${commercialAvailable ? 'lg:col-span-5' : 'lg:col-span-3'}`}>
           <ConversationsChart
             series={series}
             loading={seriesLoading}
@@ -216,13 +220,13 @@ export default function DashboardPage() {
             onRangeChange={handleRangeChange}
           />
         </div>
-        <div className="h-full lg:col-span-2">
+        {!commercialAvailable && <div className="h-full lg:col-span-2">
           <PipelineDonut
             data={pipeline}
             loading={pipelineLoading}
             currency={defaultCurrency}
           />
-        </div>
+        </div>}
       </div>
 
       {/* Response time */}

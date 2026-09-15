@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from 'next/navigation';
+import { useRealtime } from '@/hooks/use-realtime';
+import { stageStatus } from '@/lib/creacom/model';
+import { CommercialMetrics } from '@/components/dashboard/commercial-metrics';
 import { createClient } from "@/lib/supabase/client";
 import type { Pipeline, PipelineStage, Deal } from "@/types";
 import { PipelineBoard } from "@/components/pipelines/pipeline-board";
@@ -46,6 +50,13 @@ const SPEC_DEFAULT_STAGES = [
 ];
 
 export default function PipelinesPage() {
+  return <Suspense fallback={<p>Cargando embudo…</p>}><PipelinesContent /></Suspense>;
+}
+function PipelinesContent() {
+  const searchParams = useSearchParams();
+  const linkedPipeline = searchParams.get('pipeline');
+  const linkedDeal = searchParams.get('deal');
+  const openedLink = useRef<string | null>(null);
   const t = useTranslations("Pipelines.page");
   const supabase = createClient();
   const canEditSettings = useCan("edit-settings");
@@ -69,6 +80,7 @@ export default function PipelinesPage() {
   const [dealFormOpen, setDealFormOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [defaultStageId, setDefaultStageId] = useState<string>("");
+  const [requestedStageId, setRequestedStageId] = useState<string>('');
 
   // Guard against double-seeding (React StrictMode double-effect in dev).
   const seedAttempted = useRef(false);
@@ -101,7 +113,7 @@ export default function PipelinesPage() {
     async (pipelineId: string) => {
       const { data } = await supabase
         .from("deals")
-        .select("*, contact:contacts(*), assignee:profiles!deals_assigned_to_fkey(*)")
+        .select("*, contact:contacts!deals_contact_id_fkey(*), assignee:profiles!deals_assigned_to_fkey(*)")
         .eq("pipeline_id", pipelineId)
         .order("created_at", { ascending: false });
       return (data ?? []) as Deal[];
@@ -157,6 +169,7 @@ export default function PipelinesPage() {
       setPipelines(list);
       if (list.length > 0) {
         setSelectedPipelineId((prev) =>
+          linkedPipeline && list.some(p => p.id === linkedPipeline) ? linkedPipeline :
           prev && list.some((p) => p.id === prev) ? prev : list[0].id,
         );
       } else {
@@ -167,7 +180,7 @@ export default function PipelinesPage() {
     return () => {
       cancelled = true;
     };
-  }, [loadPipelines, seedDefaultPipeline]);
+  }, [loadPipelines, seedDefaultPipeline, linkedPipeline]);
 
   // Load stages + deals whenever selected pipeline changes.
   // Clearing on no-selection is a legitimate sync with URL/prop
@@ -190,11 +203,18 @@ export default function PipelinesPage() {
       if (cancelled) return;
       setStages(s);
       setDeals(d);
+      if (linkedDeal && openedLink.current !== linkedDeal) {
+        const target = d.find(work => work.id === linkedDeal);
+        if (target) {
+          openedLink.current = linkedDeal;
+          setEditingDeal(target); setRequestedStageId(''); setDealFormOpen(true);
+        } else toast.error('No se encontró la obra en este embudo.');
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [selectedPipelineId, loadStages, loadDeals]);
+  }, [selectedPipelineId, loadStages, loadDeals, linkedDeal]);
 
   const refreshPipelines = useCallback(async () => {
     const list = await loadPipelines();
@@ -213,28 +233,39 @@ export default function PipelinesPage() {
     if (!selectedPipelineId) return;
     setDeals(await loadDeals(selectedPipelineId));
   }, [loadDeals, selectedPipelineId]);
+  useRealtime({ channelName: `pipeline-deals-${accountId}`, enabled: !!accountId, onDealEvent: refreshDeals });
 
   const handleDealMoved = useCallback(
     async (dealId: string, newStageId: string) => {
+      const pipeline = pipelines.find(p => p.id === selectedPipelineId);
+      const target = stages.find(s => s.id === newStageId);
+      if (!canCreateDeals || !target) return;
+      if (pipeline?.model_key === 'creacom' && target.semantic_key === 'not_converted') {
+        const work = deals.find(d => d.id === dealId);
+        if (work) { setEditingDeal(work); setRequestedStageId(newStageId); setDealFormOpen(true); }
+        return; // Nothing persisted until the reason form is saved.
+      }
       // Optimistic update — board already animated; just persist.
       setDeals((prev) =>
-        prev.map((d) => (d.id === dealId ? { ...d, stage_id: newStageId } : d)),
+        prev.map((d) => (d.id === dealId ? { ...d, stage_id: newStageId,
+          ...(pipeline?.model_key === 'creacom' ? { status: stageStatus(target.semantic_key) } : {}) } : d)),
       );
       const { error } = await supabase
         .from("deals")
         .update({ stage_id: newStageId })
-        .eq("id", dealId);
+        .eq("id", dealId).select('id').single();
       if (error) {
         toast.error(t("toastFailedMoveDeal"));
         refreshDeals();
       }
     },
-    [supabase, refreshDeals, t],
+    [supabase, refreshDeals, t, pipelines, selectedPipelineId, stages, deals, canCreateDeals],
   );
 
   const handleAddDeal = useCallback(
     (stageId?: string) => {
       setEditingDeal(null);
+      setRequestedStageId('');
       setDefaultStageId(stageId ?? stages[0]?.id ?? "");
       setDealFormOpen(true);
     },
@@ -242,6 +273,7 @@ export default function PipelinesPage() {
   );
 
   const handleEditDeal = useCallback((deal: Deal) => {
+    setRequestedStageId('');
     setEditingDeal(deal);
     setDefaultStageId(deal.stage_id);
     setDealFormOpen(true);
@@ -385,7 +417,7 @@ export default function PipelinesPage() {
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="mr-1 h-4 w-4" />
-            {t("addDeal")}
+            {selectedPipeline?.model_key === 'creacom' ? 'Nueva oportunidad' : t("addDeal")}
           </GatedButton>
         </div>
       </div>
@@ -412,7 +444,9 @@ export default function PipelinesPage() {
         </div>
       ) : (
         <>
-          <PipelineAnalytics stages={stages} deals={deals} />
+          {selectedPipeline?.model_key === 'creacom' ?
+            <CommercialMetrics pipelineId={selectedPipelineId} demo={selectedPipeline.is_demo} revision={deals} /> :
+            <PipelineAnalytics stages={stages} deals={deals} />}
           <PipelineBoard
             stages={stages}
             deals={deals}
@@ -487,6 +521,8 @@ export default function PipelinesPage() {
         pipelineId={selectedPipelineId}
         stages={stages}
         defaultStageId={defaultStageId}
+        requestedStageId={requestedStageId}
+        commercial={selectedPipeline?.model_key === 'creacom'}
         onSaved={refreshDeals}
       />
     </div>

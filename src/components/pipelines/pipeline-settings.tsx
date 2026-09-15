@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { LossReasons } from './loss-reasons';
 
 const STAGE_COLORS = [
   "#3b82f6",
@@ -116,6 +117,7 @@ export function PipelineSettings({
       name: s.name,
       color: s.color,
       position: i,
+      semantic_key: s.semantic_key ?? null,
     }));
 
     const [renameRes, stagesRes] = await Promise.all([
@@ -140,6 +142,7 @@ export function PipelineSettings({
   }
 
   async function handleAddStage() {
+    if (pipeline.model_key === 'creacom') return;
     const trimmed = newStageName.trim();
     if (!trimmed) return;
     const { data, error } = await supabase
@@ -162,6 +165,7 @@ export function PipelineSettings({
   }
 
   async function handleRemoveStage(stageId: string) {
+    if (pipeline.model_key === 'creacom') { toast.error('Las etapas CREACOM conservan su significado técnico.'); return; }
     // Refuse to delete if deals still reference the stage (FK would fail).
     const { count } = await supabase
       .from("deals")
@@ -316,7 +320,7 @@ export function PipelineSettings({
                     variant="outline"
                     size="sm"
                     onClick={handleAddStage}
-                    disabled={!newStageName.trim()}
+                    disabled={!newStageName.trim() || pipeline.model_key === 'creacom'}
                     className="shrink-0 border-border bg-transparent text-muted-foreground hover:bg-muted"
                   >
                     <Plus className="mr-1 h-3 w-3" />
@@ -325,6 +329,7 @@ export function PipelineSettings({
                 </div>
               </div>
 
+              {pipeline.model_key === 'creacom' && <LossReasons />}
               <Button
                 variant="outline"
                 onClick={onCreateNewPipeline}

@@ -1,4 +1,18 @@
-# wacrm — CRM Template for WhatsApp
+# CREACOM | Sistema Comercial de Hormigón
+
+CRM comercial CREACOM basado en WACRM (MIT). Una persona/empresa puede tener
+varias obras, con volumen, resistencia, entrega prevista y seguimiento comercial.
+La Fase 1 conserva las funciones WACRM y no conecta todavía Groq ni WhatsApp real.
+
+- Producción: [Sistema de ventas CREACOM](https://sistema-ventas-creacom-hormigonera.vercel.app)
+- [Arquitectura, migraciones, métricas, QA y recuperación](docs/creacom-architecture.md)
+- Node 24; `npm ci`, `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`.
+- E2E: aprovisionar Supabase temporal con `scripts/seed-e2e.mjs --local`, cargar
+  `.env.e2e.local` y ejecutar Playwright. Nunca usar la cuenta comercial real para QA.
+- Migraciones alojadas: no ejecutar db push sobre el historial 001–041;
+  aplicar únicamente expansiones nuevas según el orden documentado.
+
+## WACRM upstream
 
 > Self-hostable CRM template for WhatsApp® — shared inbox, contacts,
 > sales pipelines, broadcasts, and no-code automations. Fork it, brand
@@ -11,7 +25,7 @@
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-violet.svg)](./LICENSE)
-[![CI](https://github.com/ArnasDon/wacrm/actions/workflows/ci.yml/badge.svg)](https://github.com/ArnasDon/wacrm/actions/workflows/ci.yml)
+[![CI](https://github.com/JeanLoor1703/wacrm/actions/workflows/ci.yml/badge.svg)](https://github.com/JeanLoor1703/wacrm/actions/workflows/ci.yml)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Auth-3ecf8e?logo=supabase)](https://supabase.com)
 [![Stars](https://img.shields.io/github/stars/ArnasDon/wacrm?style=social)](https://github.com/ArnasDon/wacrm/stargazers)
