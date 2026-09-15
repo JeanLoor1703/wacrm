@@ -232,7 +232,8 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     expect(workHref).toMatch(/^\/pipelines\?pipeline=.+&deal=.+$/);
     // Follow the same deep link exposed to users from the contact view. This
     // verifies that a work can be reopened without requiring a board click.
-    await page.goto(workHref!);
+    await workLink.click();
+    await expect(page).toHaveURL(/\/pipelines\?pipeline=/);
     console.log('smoke:contact-deal-link');
     sheet = page.getByRole('dialog');
     await expect(
