@@ -13,7 +13,11 @@ function api(path, method = 'GET', body) {
   const result = spawnSync(process.execPath, [npx, '--yes', 'vercel@50.32.4', 'api', `${path}?teamId=${team}`, '--method', method, '--raw', ...(body ? ['--input', '-'] : [])], {
     input: body ? JSON.stringify(body) : undefined, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024,
   });
-  if (result.status) throw new Error(`Vercel ${method} failed (${result.status}); response withheld to protect configuration.`);
+  if (result.status) {
+    let detail = result.stderr?.split('\n').find((line) => /^Error:/.test(line)) || 'response withheld';
+    for (const item of (Array.isArray(body) ? body : [])) detail = detail.replaceAll(item.value, '[REDACTED]');
+    throw new Error(`Vercel ${method} failed (${result.status}): ${detail.slice(0, 250)}`);
+  }
   try { return JSON.parse(result.stdout); } catch { throw new Error('Vercel returned invalid JSON; response withheld.'); }
 }
 const p = api(`/v9/projects/${project}`);
@@ -31,11 +35,13 @@ if (action === 'inspect') {
   const keys = Object.keys(safe);
   const additions = keys.filter((key) => !envs.some((e) => e.key === key && e.target?.includes('preview'))).map((key) => {
     if (!safe[key]) throw new Error(`Missing required configuration: ${key}`);
-    return { key, value: safe[key], type: 'encrypted', target: ['preview'], gitBranch: 'codex/creacom-opportunities', comment: 'CREACOM Phase 1 user-scoped QA Preview. No production administrative/provider secrets.' };
+    return { key, value: safe[key] };
   });
   if (additions.length) {
-    const result = api(`/v10/projects/${project}/env`, 'POST', additions);
-    if (result.failed?.length) throw new Error('Some Preview variables failed; values withheld.');
+    for (const item of additions) {
+      const result = spawnSync(process.execPath, [npx, '--yes', 'vercel@50.32.4', 'env', 'add', item.key, 'preview', '--sensitive', '--yes'], { input: item.value, encoding: 'utf8' });
+      if (result.status) throw new Error(`Could not create Preview key ${item.key}; value withheld.`);
+    }
   }
-  console.log(JSON.stringify({ project: p.name, configuredPreviewKeys: additions.map((e) => e.key), productionChanged: false }));
+  console.log(JSON.stringify({ project: p.name, configuredPreviewKeys: additions.map((e) => e.key), productionAdministrativeSecretsCopied: false, productionChanged: false }));
 } else throw new Error('Supported actions: inspect, configure.');

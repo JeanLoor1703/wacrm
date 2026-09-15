@@ -45,7 +45,7 @@ test('isolated commercial workflow, persistence and responsive form', async ({
   let contactId: string | undefined;
   try {
     await login(page);
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
     await page.goto('/contacts');
     await page
       .getByRole('button', { name: 'Agregar cliente', exact: true })

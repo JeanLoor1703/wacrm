@@ -15,6 +15,7 @@ async function api(path, method = 'GET', body) {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (response.status === 404 && path === 'branches/main/protection' && method === 'GET') return null;
   if (!response.ok) throw new Error(`GitHub ${method} ${path.split('?')[0]} returned ${response.status}.`);
   return response.status === 204 ? null : response.json();
 }
@@ -34,6 +35,19 @@ if (action === 'pr') {
 } else if (action === 'jobs') {
   const data = await api(`actions/runs/${Number(id)}/jobs`);
   console.log(JSON.stringify(data.jobs.map((j) => ({ id: j.id, name: j.name, status: j.status, conclusion: j.conclusion, steps: j.steps.map((s) => ({ name: s.name, conclusion: s.conclusion })) }))));
+} else if (action === 'protection') {
+  const current = await api('branches/main/protection');
+  console.log(JSON.stringify({ exists: !!current, reviews: current?.required_pull_request_reviews, checks: current?.required_status_checks, enforceAdmins: current?.enforce_admins?.enabled }));
+} else if (action === 'protect') {
+  const current = await api('branches/main/protection');
+  if (current) throw new Error('Existing protection detected: inspect/preserve its stronger settings before updating.');
+  const result = await api('branches/main/protection', 'PUT', {
+    required_status_checks: { strict: true, contexts: ['Lint, typecheck, test, build', 'Database and Chromium smoke'] },
+    enforce_admins: true,
+    required_pull_request_reviews: { required_approving_review_count: 0, dismiss_stale_reviews: true, require_code_owner_reviews: false },
+    restrictions: null, required_conversation_resolution: true, allow_force_pushes: false, allow_deletions: false,
+  });
+  console.log(JSON.stringify({ mainProtected: true, checks: result.required_status_checks.contexts, pullRequestRequired: !!result.required_pull_request_reviews }));
 } else {
   throw new Error('Supported actions: pr, checks PR_NUMBER, jobs RUN_ID.');
 }
