@@ -94,10 +94,12 @@ actualizaciones después de desmontar.
 ## Migraciones y orden de entrega
 
 1. `20260914232058_creacom_commercial_model.sql`: expansión, catálogo, campos,
-   FKs, validación, métricas y Realtime. NO activa el pipeline oficial.
-2. Crear/probar sólo la cuenta aislada DEMO QA CREACOM en Preview.
-3. CI y Preview verdes, PR hacia main y aplicación nueva disponible/verificada.
-4. Repetir inspección y aplicar LAST `20260914234127_activate_creacom_pipeline.sql`.
+   FKs, validación, métricas y Realtime. Aplicada al proyecto autorizado.
+2. `20260915000512_creacom_relation_indexes.sql`: índices de las FKs compuestas,
+   aplicada después de validar el esquema.
+3. Se creó y probó sólo la cuenta aislada DEMO QA CREACOM (`is_demo = true`).
+4. Tras repetir la inspección (pipeline oficial sin oportunidades y cinco etapas
+   originales), se aplicó LAST `20260914234127_activate_creacom_pipeline.sql`.
 
 La activación busca la cuenta por email del propietario autorizado, no por IDs
 generados. Bloquea escrituras durante la inspección transaccional. Exige pipeline
@@ -124,6 +126,23 @@ en su orden de entrega. MCP apply_migration puede asignar timestamp alojado dist
 documentar nombre/version real en el informe. NO ejecutar `supabase db push` ciego,
 NO reparar ni reejecutar 001–041. CI temporal sí reproduce todo desde cero.
 Archivos nuevos fueron creados con Supabase CLI 2.113.0 `migration new`.
+
+### Estado de entrega verificado
+
+Proyecto Supabase alojado: `bqehnefuivaojiegapei`. El pipeline oficial quedó como
+`Ventas CREACOM` con siete etapas y cero oportunidades al activarlo. El pipeline
+`DEMO — Embudo CREACOM (auditoría)` conserva su oportunidad; `Sales Pipeline` y
+los demás pipelines WACRM no se modificaron. Preview corresponde únicamente al
+proyecto Vercel `sistema-ventas-creacom-hormigonera` y usa variables públicas de
+Supabase más una clave de cifrado propia de Preview; no copia secretos de
+producción.
+
+El PR de entrega es `https://github.com/JeanLoor1703/wacrm/pull/1` en
+`codex/creacom-opportunities`. CI general ejecuta lint, typecheck, 880 pruebas
+Vitest y build; el workflow de migraciones ejecuta pgTAP (50 assertions), schema
+smoke y Chromium secuencial. El navegador remoto del Preview sigue protegido por
+Vercel Authentication, por lo que la validación E2E de navegador se realiza en
+el stack temporal de CI sin desactivar esa protección.
 
 ## Pruebas y CI
 
