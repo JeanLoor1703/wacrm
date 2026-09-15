@@ -9,13 +9,13 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.API_URL;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.ANON_KEY;
 const service =
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
-if (!url || !anon || !service)
+if (!url || !anon || (!service && local))
   throw new Error('Missing secure Supabase configuration.');
 if (hosted && new URL(url).hostname !== 'bqehnefuivaojiegapei.supabase.co')
   throw new Error('Wrong hosted project.');
 if (local && !['localhost', '127.0.0.1'].includes(new URL(url).hostname))
   throw new Error('Local fixtures cannot target a hosted database.');
-const db = createClient(url, service, {
+let db = createClient(url, service || anon, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 const email = hosted
@@ -23,14 +23,14 @@ const email = hosted
   : 'demo.qa.creacom@local.test';
 const password =
   process.env.E2E_PASSWORD || randomBytes(24).toString('base64url');
-const { data: created, error: createError } = await db.auth.admin.createUser({
+const createdResult = service ? await db.auth.admin.createUser({
   email,
   password,
   email_confirm: true,
   user_metadata: { full_name: 'DEMO QA CREACOM' },
-});
-let user = created?.user;
-if (createError) {
+}) : { data: {}, error: new Error('Use existing hosted QA') };
+let user = createdResult.data?.user;
+if (createdResult.error && service) {
   for (let page = 1; page <= 100 && !user; page++) {
     const { data, error } = await db.auth.admin.listUsers({
       page,
@@ -45,6 +45,11 @@ if (createError) {
     throw new Error(
       'QA already exists: load its password securely; do not rotate credentials.'
     );
+} else if (!service) {
+  const login = await db.auth.signInWithPassword({ email, password });
+  if (login.error || !login.data.user) throw new Error('Hosted QA user is not ready.');
+  user = login.data.user;
+  db = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false }, global: { headers: { Authorization: `Bearer ${login.data.session.access_token}` } } });
 }
 const { data: profile, error: profileError } = await db
   .from('profiles')

@@ -55,7 +55,10 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     await sheet
       .locator('#cf-phone')
       .fill(`+59399${String(Date.now()).slice(-7)}`);
-    await sheet.getByRole('button', { name: /crear/i }).click();
+    await sheet.locator('#cf-phone').blur();
+    const createContact = sheet.getByRole('button', { name: /crear/i });
+    await expect(createContact).toBeEnabled();
+    await createContact.click();
     await expect(sheet).not.toBeVisible();
     const contact = await db
       .from('contacts')

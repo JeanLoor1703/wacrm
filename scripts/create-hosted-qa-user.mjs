@@ -1,0 +1,14 @@
+import { createClient } from '@supabase/supabase-js';
+import { randomBytes } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { parseEnv } from 'node:util';
+const source = parseEnv(readFileSync('.vercel/.env.production.local', 'utf8'));
+const url = source.NEXT_PUBLIC_SUPABASE_URL, anon = source.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+if (new URL(url).hostname !== 'bqehnefuivaojiegapei.supabase.co' || !anon) throw new Error('Wrong hosted project configuration.');
+const email = 'demo.qa.creacom@example.com';
+const password = randomBytes(24).toString('base64url');
+const db = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
+const { error } = await db.auth.signUp({ email, password, options: { data: { full_name: 'DEMO QA CREACOM' } } });
+if (error) throw new Error('Could not create isolated QA signup.');
+writeFileSync('.env.e2e.local', Object.entries({ NEXT_PUBLIC_SUPABASE_URL: url, NEXT_PUBLIC_SUPABASE_ANON_KEY: anon, E2E_EMAIL: email, E2E_PASSWORD: password }).map(([key, value]) => `${key}=${JSON.stringify(value)}`).join('\n') + '\n', { mode: 0o600, flag: 'wx' });
+console.log('QA signup created; generated password saved only in ignored configuration.');

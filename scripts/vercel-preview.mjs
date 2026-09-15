@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 import { parseEnv } from 'node:util';
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
@@ -10,9 +11,11 @@ const linked = JSON.parse(readFileSync('.vercel/project.json', 'utf8'));
 if (linked.projectId !== project || linked.orgId !== team) throw new Error('Wrong Vercel project.');
 const npx = resolve(dirname(process.execPath), 'node_modules/npm/bin/npx-cli.js');
 function api(path, method = 'GET', body) {
-  const result = spawnSync(process.execPath, [npx, '--yes', 'vercel@50.32.4', 'api', `${path}?teamId=${team}`, '--method', method, '--raw', ...(body ? ['--input', '-'] : [])], {
-    input: body ? JSON.stringify(body) : undefined, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024,
-  });
+  const temporary = body ? mkdtempSync(resolve(tmpdir(), 'creacom-vercel-')) : null;
+  const input = temporary ? resolve(temporary, 'request.json') : null;
+  if (input) writeFileSync(input, JSON.stringify(body), { mode: 0o600 });
+  const result = spawnSync(process.execPath, [npx, '--yes', 'vercel@50.32.4', 'api', `${path}?teamId=${team}`, '--method', method, '--raw', ...(input ? ['--input', input] : [])], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+  if (temporary) rmSync(temporary, { recursive: true, force: true });
   if (result.status) {
     let detail = result.stderr?.split('\n').find((line) => /^Error:/.test(line)) || 'response withheld';
     for (const item of (Array.isArray(body) ? body : [])) detail = detail.replaceAll(item.value, '[REDACTED]');
@@ -39,8 +42,9 @@ if (action === 'inspect') {
   });
   if (additions.length) {
     for (const item of additions) {
-      const result = spawnSync(process.execPath, [npx, '--yes', 'vercel@50.32.4', 'env', 'add', item.key, 'preview', '--sensitive', '--yes'], { input: item.value, encoding: 'utf8' });
-      if (result.status) throw new Error(`Could not create Preview key ${item.key}; value withheld.`);
+      const payload = { ...item, type: 'encrypted', target: ['preview'], gitBranch: 'codex/creacom-opportunities', comment: 'CREACOM Phase 1 user-scoped QA Preview. No production administrative/provider secrets.' };
+      const result = api(`/v10/projects/${project}/env`, 'POST', payload);
+      if (result.failed?.length) throw new Error(`Preview key ${item.key} failed; value withheld.`);
     }
   }
   console.log(JSON.stringify({ project: p.name, configuredPreviewKeys: additions.map((e) => e.key), productionAdministrativeSecretsCopied: false, productionChanged: false }));
