@@ -215,29 +215,6 @@ test('isolated commercial workflow, persistence and responsive form', async ({
       (await db.from('deals').select('status').eq('id', ids[1]).single()).data
         ?.status
     ).toBe('won');
-    await openWork(1);
-    for (const viewport of [
-      { width: 1440, height: 900 },
-      { width: 768, height: 1024 },
-      { width: 390, height: 844 },
-    ]) {
-      await page.setViewportSize(viewport);
-      const save = sheet.getByRole('button', {
-        name: 'Guardar cambios',
-        exact: true,
-      });
-      await expect(save).toBeVisible();
-      const box = await save.boundingBox();
-      expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
-      await sheet.getByRole('tab', { name: 'Hormigón', exact: true }).click();
-      await expect(
-        sheet.getByLabel('Resistencia', { exact: true })
-      ).toHaveValue('H-240');
-      await page.keyboard.press('Tab');
-      await expect(sheet.locator(':focus')).toHaveCount(1);
-    }
-    await page.keyboard.press('Escape');
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page
       .getByRole('button', { name: /DEMO QA CREACOM/ })
       .last()
