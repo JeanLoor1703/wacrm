@@ -192,3 +192,14 @@ describe('generateReply — Anthropic', () => {
     expect(body.messages).toHaveLength(1)
   })
 })
+
+describe('generateReply — Groq', () => {
+  it('uses the OpenAI-compatible Groq endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse({ choices: [{ message: { content: 'ok' } }] }))
+    vi.stubGlobal('fetch', fetchMock)
+    await generateReply({ config: config({ provider: 'groq', model: 'llama-test' }), systemPrompt: 'sys', messages: [{ role: 'user', content: 'Hola' }] })
+    const [url, opts] = fetchMock.mock.calls[0]
+    expect(url).toContain('api.groq.com/openai/v1/chat/completions')
+    expect(opts.headers.Authorization).toBe('Bearer sk-test')
+  })
+})

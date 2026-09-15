@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bot, Sparkles, Settings2, BarChart3 } from 'lucide-react';
+import { Bot, Sparkles, Settings2, BarChart3, FlaskConical } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { AiPlayground } from '@/components/agents/ai-playground';
 import { AiUsageCard } from '@/components/agents/ai-usage';
 import { AiConfig } from '@/components/settings/ai-config';
+import { AiCommercialSimulator } from '@/components/agents/ai-commercial-simulator';
 import { useAuth } from '@/hooks/use-auth';
 import { canEditSettings } from '@/lib/auth/roles';
 
-type Tab = 'playground' | 'setup' | 'usage';
+type Tab = 'playground' | 'simulator' | 'setup' | 'usage';
 
 export default function AgentsPage() {
   const { accountRole } = useAuth();
@@ -56,8 +57,11 @@ export default function AgentsPage() {
           className="mt-6"
         >
           <TabsList>
-            <TabsTrigger value="playground">
+          <TabsTrigger value="playground">
               <Sparkles className="mr-1.5 h-4 w-4" /> Playground
+          </TabsTrigger>
+            <TabsTrigger value="simulator">
+              <FlaskConical className="mr-1.5 h-4 w-4" /> Simulador comercial
             </TabsTrigger>
             <TabsTrigger value="setup">
               <Settings2 className="mr-1.5 h-4 w-4" /> Setup
@@ -71,6 +75,10 @@ export default function AgentsPage() {
 
           <TabsContent value="playground" className="mt-4">
             <AiPlayground onGoToSetup={() => setTab('setup')} />
+          </TabsContent>
+
+          <TabsContent value="simulator" className="mt-4">
+            <AiCommercialSimulator />
           </TabsContent>
 
           <TabsContent value="setup" className="mt-4">

@@ -6,7 +6,7 @@
 // whether the account is on OpenAI or Anthropic.
 // ============================================================
 
-export type AiProvider = 'openai' | 'anthropic'
+export type AiProvider = 'openai' | 'anthropic' | 'groq'
 
 /**
  * Account AI setup, decrypted and ready to use. Produced by
@@ -16,6 +16,8 @@ export type AiProvider = 'openai' | 'anthropic'
 export interface AiConfig {
   provider: AiProvider
   model: string
+  /** Optional provider-compatible base URL (used by Groq and gateways). */
+  baseUrl?: string | null
   apiKey: string
   systemPrompt: string | null
   isActive: boolean

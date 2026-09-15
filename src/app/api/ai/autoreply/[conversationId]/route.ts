@@ -62,7 +62,10 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
 
-    const update: Record<string, unknown> = { ai_autoreply_disabled: paused }
+    const update: Record<string, unknown> = {
+      ai_autoreply_disabled: paused,
+      ai_handoff_state: paused ? (assignToMe ? 'HUMAN_ACTIVE' : 'HUMAN_REQUESTED') : 'AI_ACTIVE',
+    }
 
     if (paused) {
       if (assignToMe) update.assigned_agent_id = userId
@@ -81,6 +84,8 @@ export async function POST(request: Request, { params }: Params) {
       // a human choosing to re-engage the assistant.
       update.ai_reply_count = 0
       update.ai_handoff_summary = null
+      update.ai_handoff_reason = null
+      update.ai_handoff_requested_at = null
     }
 
     const { error: upErr } = await supabase

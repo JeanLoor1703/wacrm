@@ -108,5 +108,11 @@ select is((creacom_metrics('20000000-0000-0000-0000-000000000003')->>'open_count
 select lives_ok($$delete from contacts where id='30000000-0000-0000-0000-000000000001'$$,'contact deletion preserves work history');
 select is((select count(*) from deals where contact_id is null),1008::bigint,'orphaned work history retained');
 reset role;
+select has_column('ai_configs','base_url','AI provider base URL is configurable');
+select has_column('conversations','ai_handoff_state','handoff state persists');
+select has_table('ai_change_log','AI change audit table exists');
+select ok((select relrowsecurity from pg_class where oid='ai_change_log'::regclass),'AI audit RLS enabled');
+select ok((select count(*) from pg_policies where schemaname='public' and tablename='ai_change_log' and policyname='ai_change_log_select')=1,'AI audit account read policy');
+select throws_ok($$insert into ai_change_log(account_id,field_name,origin) select b,'estimated_volume_m3','ai' from tenants$$,'42501',null,'AI audit cannot cross accounts');
 select * from finish();
 rollback;
