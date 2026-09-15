@@ -231,11 +231,8 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     const workHref = await workLink.getAttribute('href');
     expect(workHref).toMatch(/^\/pipelines\?pipeline=.+&deal=.+$/);
     await page.goto(`/pipelines?pipeline=${pipelineId}`);
-    const pipelineCard = page
-      .getByRole('button')
-      .filter({ hasText: `${run} Losa` })
-      .first();
-    await pipelineCard.evaluate((element) => (element as HTMLElement).click());
+    const pipelineCardTitle = page.getByRole('heading', { name: `${run} Losa`, exact: true });
+    await pipelineCardTitle.evaluate((element) => (element as HTMLElement).click());
     console.log('smoke:contact-deal-link');
     sheet = page.getByRole('dialog');
     await expect(
