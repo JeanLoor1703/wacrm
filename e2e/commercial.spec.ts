@@ -226,7 +226,9 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     console.log('smoke:contact-open');
     await page.getByRole('tab', { name: /Oportunidades/ }).click({ force: true });
     console.log('smoke:contact-opportunities');
-    await page.getByRole('link', { name: `${run} Losa`, exact: true }).click();
+    const workLink = page.getByRole('link', { name: `${run} Losa`, exact: true });
+    await workLink.scrollIntoViewIfNeeded();
+    await workLink.click();
     console.log('smoke:contact-deal-link');
     sheet = page.getByRole('dialog');
     await expect(
