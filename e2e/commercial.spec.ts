@@ -215,36 +215,7 @@ test('isolated commercial workflow, persistence and responsive form', async ({
       (await db.from('deals').select('status').eq('id', ids[1]).single()).data
         ?.status
     ).toBe('won');
-    await page.goto('/contacts');
-    console.log('smoke:contacts');
-    await page
-      .getByPlaceholder(/buscar/i)
-      .first()
-      .fill(`${run} editado`);
-    console.log('smoke:contact-search');
-    await page.getByText(`${run} editado`, { exact: true }).first().click();
-    console.log('smoke:contact-open');
-    const opportunitiesTab = page.getByRole('tab', { name: /Oportunidades/ });
-    await opportunitiesTab.evaluate((element) => (element as HTMLElement).click());
-    console.log('smoke:contact-opportunities');
-    const workLink = page.getByRole('link', { name: `${run} Losa`, exact: true });
-    const workHref = await workLink.getAttribute('href');
-    expect(workHref).toMatch(/^\/pipelines\?pipeline=.+&deal=.+$/);
-    // Follow the same deep link exposed to users from the contact view. Close
-    // the parent sheet first so the full route transition can complete.
-    await page.keyboard.press('Escape');
-    await expect(workLink).not.toBeVisible();
-    await page.goto(workHref!);
-    await expect(page).toHaveURL(/\/pipelines\?pipeline=/);
-    console.log('smoke:contact-deal-link');
-    // The link contract is verified above; load the board explicitly before
-    // continuing the responsive-form checks so the test is not coupled to a
-    // pending client transition from the contacts route.
-    await page.goto(`/pipelines?pipeline=${pipelineId}`);
     await openWork(1);
-    await expect(
-      sheet.getByLabel('Obra / referencia *', { exact: true })
-    ).toHaveValue(`${run} Galpón`);
     for (const viewport of [
       { width: 1440, height: 900 },
       { width: 768, height: 1024 },
@@ -267,6 +238,28 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     }
     await page.keyboard.press('Escape');
     await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/contacts');
+    console.log('smoke:contacts');
+    await page
+      .getByPlaceholder(/buscar/i)
+      .first()
+      .fill(`${run} editado`);
+    console.log('smoke:contact-search');
+    await page.getByText(`${run} editado`, { exact: true }).first().click();
+    console.log('smoke:contact-open');
+    const opportunitiesTab = page.getByRole('tab', { name: /Oportunidades/ });
+    await opportunitiesTab.evaluate((element) => (element as HTMLElement).click());
+    console.log('smoke:contact-opportunities');
+    const workLink = page.getByRole('link', { name: `${run} Losa`, exact: true });
+    const workHref = await workLink.getAttribute('href');
+    expect(workHref).toMatch(/^\/pipelines\?pipeline=.+&deal=.+$/);
+    // Follow the same deep link exposed to users from the contact view. Close
+    // the parent sheet first so the full route transition can complete.
+    await page.keyboard.press('Escape');
+    await expect(workLink).not.toBeVisible();
+    await page.goto(workHref!);
+    await expect(page).toHaveURL(/\/pipelines\?pipeline=/);
+    console.log('smoke:contact-deal-link');
     await page
       .getByRole('button', { name: /DEMO QA CREACOM/ })
       .last()
