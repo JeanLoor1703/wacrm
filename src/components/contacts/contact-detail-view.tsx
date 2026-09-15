@@ -706,7 +706,7 @@ export function ContactDetailView({
                         className="rounded-lg border border-border bg-muted/50 p-3"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <Link href={opportunityHref(deal)} onClick={() => onOpenChange(false)} className="text-sm font-medium text-foreground underline decoration-primary/50 underline-offset-4 focus-visible:outline-2 focus-visible:outline-primary">
+                          <Link href={opportunityHref(deal)} className="text-sm font-medium text-foreground underline decoration-primary/50 underline-offset-4 focus-visible:outline-2 focus-visible:outline-primary">
                             {deal.title}
                           </Link>
                           {deal.stage && (
