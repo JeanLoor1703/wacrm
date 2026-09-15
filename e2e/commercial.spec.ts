@@ -45,6 +45,7 @@ test('isolated commercial workflow, persistence and responsive form', async ({
   let contactId: string | undefined;
   try {
     await login(page);
+    console.log('smoke:login');
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
     await page.goto('/contacts');
     await page
@@ -60,6 +61,7 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     await expect(createContact).toBeEnabled();
     await createContact.click();
     await expect(sheet).not.toBeVisible();
+    console.log('smoke:contact-created');
     const contact = await db
       .from('contacts')
       .select('id')
@@ -128,6 +130,7 @@ test('isolated commercial workflow, persistence and responsive form', async ({
         .getByRole('button', { name: 'Crear oportunidad', exact: true })
         .click();
       await expect(sheet).not.toBeVisible();
+      console.log(`smoke:deal-created:${index}`);
       const work = await db
         .from('deals')
         .select('id')
@@ -151,6 +154,7 @@ test('isolated commercial workflow, persistence and responsive form', async ({
       .getByRole('button', { name: 'Guardar cambios', exact: true })
       .click();
     await expect(sheet).not.toBeVisible();
+    console.log('smoke:negotiation');
     await page.reload();
     sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible();
@@ -171,6 +175,7 @@ test('isolated commercial workflow, persistence and responsive form', async ({
         ?.stage_id
     ).toBe(stage('negotiation'));
     await openWork(0);
+    console.log('smoke:reopened');
     await sheet
       .getByRole('button', { name: 'No concretado', exact: true })
       .click();
@@ -188,6 +193,7 @@ test('isolated commercial workflow, persistence and responsive form', async ({
       .getByRole('button', { name: 'Guardar cambios', exact: true })
       .click();
     await expect(sheet).not.toBeVisible();
+    console.log('smoke:lost');
     const persisted = await db
       .from('deals')
       .select('*')
@@ -204,11 +210,13 @@ test('isolated commercial workflow, persistence and responsive form', async ({
       .getByRole('button', { name: 'Guardar cambios', exact: true })
       .click();
     await expect(sheet).not.toBeVisible();
+    console.log('smoke:won');
     expect(
       (await db.from('deals').select('status').eq('id', ids[1]).single()).data
         ?.status
     ).toBe('won');
     await page.goto('/contacts');
+    console.log('smoke:contacts');
     await page
       .getByPlaceholder(/buscar/i)
       .first()
