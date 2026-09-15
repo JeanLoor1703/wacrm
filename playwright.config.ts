@@ -28,7 +28,8 @@ export default defineConfig({
     : {
         // This app uses Next standalone output; `next start` intentionally
         // refuses that mode in Next 16 and leaves Playwright waiting forever.
-        command: 'node .next/standalone/server.js',
+        command:
+          'node scripts/prepare-standalone.mjs && node .next/standalone/server.js',
         url: 'http://localhost:3000/login',
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
