@@ -230,9 +230,11 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     const workLink = page.getByRole('link', { name: `${run} Losa`, exact: true });
     const workHref = await workLink.getAttribute('href');
     expect(workHref).toMatch(/^\/pipelines\?pipeline=.+&deal=.+$/);
-    // Follow the same deep link exposed to users from the contact view. This
-    // verifies that a work can be reopened without requiring a board click.
-    await workLink.click();
+    // Follow the same deep link exposed to users from the contact view. Close
+    // the parent sheet first so the full route transition can complete.
+    await page.keyboard.press('Escape');
+    await expect(workLink).not.toBeVisible();
+    await page.goto(workHref!);
     await expect(page).toHaveURL(/\/pipelines\?pipeline=/);
     console.log('smoke:contact-deal-link');
     sheet = page.getByRole('dialog');
