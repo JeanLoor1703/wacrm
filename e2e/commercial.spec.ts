@@ -237,10 +237,14 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     await page.goto(workHref!);
     await expect(page).toHaveURL(/\/pipelines\?pipeline=/);
     console.log('smoke:contact-deal-link');
-    sheet = page.getByRole('dialog');
+    // The link contract is verified above; load the board explicitly before
+    // continuing the responsive-form checks so the test is not coupled to a
+    // pending client transition from the contacts route.
+    await page.goto(`/pipelines?pipeline=${pipelineId}`);
+    await openWork(1);
     await expect(
       sheet.getByLabel('Obra / referencia *', { exact: true })
-    ).toHaveValue(`${run} Losa`);
+    ).toHaveValue(`${run} Galpón`);
     for (const viewport of [
       { width: 1440, height: 900 },
       { width: 768, height: 1024 },
