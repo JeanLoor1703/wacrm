@@ -238,6 +238,15 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     }
     await page.keyboard.press('Escape');
     await page.setViewportSize({ width: 1440, height: 900 });
+    await page
+      .getByRole('button', { name: /DEMO QA CREACOM/ })
+      .last()
+      .click();
+    await page
+      .getByRole('menuitem', { name: 'Cerrar sesión', exact: true })
+      .click();
+    await expect(page).toHaveURL(/login/);
+    await login(page);
     await page.goto('/contacts');
     console.log('smoke:contacts');
     await page
@@ -260,15 +269,6 @@ test('isolated commercial workflow, persistence and responsive form', async ({
     await page.goto(workHref!);
     await expect(page).toHaveURL(/\/pipelines\?pipeline=/);
     console.log('smoke:contact-deal-link');
-    await page
-      .getByRole('button', { name: /DEMO QA CREACOM/ })
-      .last()
-      .click();
-    await page
-      .getByRole('menuitem', { name: 'Cerrar sesión', exact: true })
-      .click();
-    await expect(page).toHaveURL(/login/);
-    await login(page);
     expect(
       (await db.from('deals').select('id').eq('contact_id', contactId)).data
         ?.length
