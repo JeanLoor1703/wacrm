@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { useCan } from '@/hooks/use-can';
 import { CURRENCIES } from '@/lib/currency';
+import { followUpDate } from '@/lib/creacom/follow-up';
+import { commercialAuditChanges } from '@/lib/creacom/audit';
 import {
   pendingFields,
   stageStatus,
@@ -22,6 +24,8 @@ import type {
   PipelineStage,
   Profile,
   UnknownBoolean,
+  SaleEvidence,
+  FollowUpStatus,
 } from '@/types';
 import {
   Sheet,
@@ -69,6 +73,13 @@ interface Draft {
   mixer_access: UnknownBoolean;
   loss_reason_id: string;
   loss_reason_detail: string;
+  actual_volume_m3: string;
+  final_sale_value: string;
+  sale_date: string;
+  sale_evidence: SaleEvidence;
+  next_follow_up_at: string;
+  follow_up_reason: string;
+  follow_up_status: FollowUpStatus | '';
 }
 const selectClass =
   'h-10 w-full rounded-lg border border-border bg-muted px-3 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-primary';
@@ -146,6 +157,13 @@ export function DealForm({
       mixer_access: deal?.mixer_access ?? 'unknown',
       loss_reason_id: deal?.loss_reason_id ?? '',
       loss_reason_detail: deal?.loss_reason_detail ?? '',
+      actual_volume_m3: deal?.actual_volume_m3 == null ? '' : String(deal.actual_volume_m3),
+      final_sale_value: deal?.final_sale_value == null ? '' : String(deal.final_sale_value),
+      sale_date: deal?.sale_date ?? '',
+      sale_evidence: deal?.sale_evidence ?? 'unknown',
+      next_follow_up_at: deal?.next_follow_up_at?.slice(0, 16) ?? '',
+      follow_up_reason: deal?.follow_up_reason ?? '',
+      follow_up_status: deal?.follow_up_status ?? '',
     });
     setTab(requestedStageId ? 'sale' : 'commercial');
     setError(null);
@@ -230,6 +248,12 @@ export function DealForm({
       notes: draft.notes.trim() || null,
       loss_reason_id: draft.loss_reason_id || null,
       loss_reason_detail: draft.loss_reason_detail.trim() || null,
+      actual_volume_m3: draft.actual_volume_m3.trim() ? Number(draft.actual_volume_m3) : null,
+      final_sale_value: draft.final_sale_value.trim() ? Number(draft.final_sale_value) : null,
+      sale_date: draft.sale_date || null,
+      next_follow_up_at: draft.next_follow_up_at ? new Date(draft.next_follow_up_at).toISOString() : null,
+      follow_up_reason: draft.follow_up_reason.trim() || null,
+      follow_up_status: draft.next_follow_up_at ? (draft.follow_up_status || 'pending') : null,
     };
     const validation = validateOpportunity(
       payload as Partial<Deal>,
@@ -278,6 +302,14 @@ export function DealForm({
         throw new Error(
           'No se pudo guardar. Revisa la etapa y el motivo, o vuelve a intentarlo.'
         );
+      if (deal) {
+        const fields = ['work_type','work_location','concrete_strength','concrete_strength_other','estimated_volume_m3','scheduled_date','needs_pump','mixer_access','actual_volume_m3','final_sale_value','sale_date','sale_evidence','next_follow_up_at','follow_up_reason','follow_up_status','stage_id','loss_reason_id','loss_reason_detail','value','currency'] as const;
+        const rows = commercialAuditChanges(deal as unknown as Record<string, unknown>, payload, fields).map((change) => ({ ...change, account_id: accountId, deal_id: deal.id, origin: 'human', actor_user_id: user.id, metadata: { source: 'deal_form' } }));
+        if (rows.length) {
+          const { error: auditError } = await db.from('ai_change_log').insert(rows);
+          if (auditError) toast.warning('La obra se guardó, pero no se pudo completar su auditoría.');
+        }
+      }
       toast.success(deal ? t('toastUpdated') : t('toastCreated'));
       onSaved();
       onOpenChange(false);
@@ -334,11 +366,15 @@ export function DealForm({
   const losing = commercial && currentStage?.semantic_key === 'not_converted';
   const pending = draft
     ? pendingFields({
-        ...draft,
-        value: Number(draft.value),
+        work_location: draft.work_location,
+        work_type: draft.work_type,
         estimated_volume_m3: draft.estimated_volume_m3
           ? Number(draft.estimated_volume_m3)
           : null,
+        concrete_strength: draft.concrete_strength,
+        scheduled_date: draft.scheduled_date,
+        needs_pump: draft.needs_pump,
+        mixer_access: draft.mixer_access,
       })
     : [];
   const textField = (key: keyof Draft, label: string, type = 'text') => (
@@ -577,6 +613,49 @@ export function DealForm({
                       'Cierre comercial previsto',
                       'date'
                     )}
+                  </div>
+                  {currentStage?.semantic_key === 'won' && (
+                    <div className="border-border bg-muted/30 space-y-4 rounded-lg border p-4">
+                      <div>
+                        <p className="text-sm font-semibold">Resultado real de la venta</p>
+                        <p className="text-muted-foreground text-xs">Separado del volumen y valor estimados. Puedes completarlo después.</p>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {textField('actual_volume_m3', 'm³ vendidos reales', 'number')}
+                        {textField('final_sale_value', 'Valor final vendido', 'number')}
+                        {textField('sale_date', 'Fecha de venta', 'date')}
+                        <Field id="work-sale-evidence" label="Confirmación">
+                          <select id="work-sale-evidence" className={selectClass} value={draft.sale_evidence} onChange={(e) => change('sale_evidence', e.target.value as SaleEvidence)}>
+                            <option value="unknown">Resultado pendiente</option>
+                            <option value="possible_historical_sale">Posible compra histórica</option>
+                            <option value="confirmed_sale">Venta confirmada</option>
+                          </select>
+                        </Field>
+                      </div>
+                    </div>
+                  )}
+                  <div className="border-border space-y-4 rounded-lg border p-4">
+                    <div>
+                      <p className="text-sm font-semibold">Próximo seguimiento</p>
+                      <p className="text-muted-foreground text-xs">Sólo agenda una tarea interna; no envía mensajes.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" variant="outline" onClick={() => { change('next_follow_up_at', followUpDate('tomorrow').slice(0, 16)); change('follow_up_status', 'pending'); }}>Mañana</Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => { change('next_follow_up_at', followUpDate('next_week').slice(0, 16)); change('follow_up_status', 'pending'); }}>Próxima semana</Button>
+                      {draft.next_follow_up_at && <Button type="button" size="sm" variant="ghost" onClick={() => { change('next_follow_up_at', ''); change('follow_up_status', ''); change('follow_up_reason', ''); }}>Quitar</Button>}
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {textField('next_follow_up_at', 'Fecha personalizada', 'datetime-local')}
+                      <Field id="work-follow-up-status" label="Estado">
+                        <select id="work-follow-up-status" className={selectClass} value={draft.follow_up_status} onChange={(e) => change('follow_up_status', e.target.value as FollowUpStatus | '')} disabled={!draft.next_follow_up_at}>
+                          <option value="">Sin seguimiento</option>
+                          <option value="pending">Pendiente</option>
+                          <option value="completed">Completado</option>
+                          <option value="cancelled">Cancelado</option>
+                        </select>
+                      </Field>
+                    </div>
+                    {textField('follow_up_reason', 'Motivo del seguimiento')}
                   </div>
                   {losing && (
                     <div className="border-border space-y-4 rounded-lg border p-4">

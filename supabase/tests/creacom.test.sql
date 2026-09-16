@@ -79,6 +79,18 @@ select is((select status from deals where title='Losa'),'won','won status synchr
 select lives_ok($$update pipeline_stages set name='Venta confirmada',position=0 where semantic_key='won' and pipeline_id='20000000-0000-0000-0000-000000000001'$$,'rename/reorder keeps stage meaning');
 select throws_ok($$update pipeline_stages set semantic_key='new' where semantic_key='won' and pipeline_id='20000000-0000-0000-0000-000000000001'$$,'23514',null,'technical keys stable');
 
+-- Real purchase outcomes, lead source, follow-up and reports.
+select lives_ok($$update contacts set lead_source='referral' where id='30000000-0000-0000-0000-000000000001'$$,'lead source persists');
+select throws_ok($$update contacts set lead_source='invented' where id='30000000-0000-0000-0000-000000000001'$$,'23514',null,'lead source catalog enforced');
+select lives_ok($$update deals set actual_volume_m3=22,final_sale_value=1200,sale_date='2026-09-15',sale_evidence='confirmed_sale' where title='Losa'$$,'confirmed real sale result');
+select throws_ok($$update deals set actual_volume_m3=null where title='Losa'$$,'23514',null,'confirmed sale keeps complete actuals');
+select lives_ok($$update deals set next_follow_up_at='2026-09-16 14:00+00',follow_up_status='pending',follow_up_reason='Confirmar fecha' where title='Galpón'$$,'follow-up persists');
+select throws_ok($$update deals set follow_up_status=null where title='Galpón'$$,'23514',null,'follow-up date and status stay paired');
+select is((creacom_metrics()->>'sold_m3')::numeric,22::numeric,'dashboard uses real sold m3');
+select is((creacom_contact_summary('30000000-0000-0000-0000-000000000001')->>'actual_volume_m3')::numeric,22::numeric,'contact history accumulates real purchases');
+select is((select actual_volume_m3 from creacom_report('source') where label='referral'),22::numeric,'report groups confirmed sales by source');
+select ok(exists(select 1 from domain_events where event_type='deal_won'),'stage changes emit domain events');
+
 -- RLS roles and isolated account.
 select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000003',true);
 select is((select count(*) from deal_loss_reasons),1::bigint,'agent reads own catalog only');
@@ -116,5 +128,8 @@ select ok((select count(*) from pg_policies where schemaname='public' and tablen
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000001',true);
 select throws_ok($$insert into ai_change_log(account_id,field_name,origin) select b,'estimated_volume_m3','ai' from tenants$$,'42501',null,'AI audit cannot cross accounts');
+select has_table('domain_events','commercial domain event table exists');
+select ok((select relrowsecurity from pg_class where oid='domain_events'::regclass),'domain events RLS enabled');
+select ok(not has_function_privilege('anon','creacom_report(text,date,date)','execute'),'anonymous reports revoked');
 select * from finish();
 rollback;

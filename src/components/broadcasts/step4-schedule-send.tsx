@@ -50,6 +50,7 @@ export function Step4ScheduleSend({
   const [showConfirm, setShowConfirm] = useState(false);
   const [estimatedReach, setEstimatedReach] = useState<number>(0);
   const [loadingReach, setLoadingReach] = useState(true);
+  const [whatsAppConnected, setWhatsAppConnected] = useState(false);
 
   useEffect(() => {
     async function calculateReach() {
@@ -82,6 +83,11 @@ export function Step4ScheduleSend({
 
     calculateReach();
   }, [audience]);
+
+  useEffect(() => {
+    const db = createClient();
+    void db.from('whatsapp_config').select('id').eq('status', 'connected').maybeSingle().then(({ data }) => setWhatsAppConnected(Boolean(data)));
+  }, []);
 
   const audienceLabel =
     audience.type === 'all'
@@ -145,6 +151,12 @@ export function Step4ScheduleSend({
       </div>
 
       {/* Processing overlay */}
+      {!whatsAppConnected && (
+        <div role="status" className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <p className="font-semibold">WhatsApp no conectado</p>
+          <p className="mt-1 text-sm text-muted-foreground">Guarda la campaña como borrador. No se puede enviar hasta completar el bloque de integración autorizado.</p>
+        </div>
+      )}
       {isProcessing && (
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
           <div className="mb-2 flex items-center justify-between">
@@ -191,7 +203,7 @@ export function Step4ScheduleSend({
           <DialogTrigger
             render={
               <Button
-                disabled={!name.trim() || isProcessing}
+                disabled={!name.trim() || isProcessing || !whatsAppConnected}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               />
             }

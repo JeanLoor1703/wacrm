@@ -104,6 +104,25 @@ export function validateOpportunity(
   )
     return 'El volumen debe ser mayor que cero.';
   if (
+    deal.actual_volume_m3 != null &&
+    (!Number.isFinite(deal.actual_volume_m3) || deal.actual_volume_m3 <= 0)
+  )
+    return 'El volumen vendido real debe ser mayor que cero.';
+  if (
+    deal.final_sale_value != null &&
+    (!Number.isFinite(deal.final_sale_value) || deal.final_sale_value < 0)
+  )
+    return 'El valor final debe ser cero o mayor.';
+  if (
+    deal.sale_evidence === 'confirmed_sale' &&
+    (!deal.actual_volume_m3 || deal.final_sale_value == null || !deal.sale_date)
+  )
+    return 'Completa volumen real, valor final y fecha para confirmar la venta.';
+  if (deal.sale_evidence === 'confirmed_sale' && stage.semantic_key !== 'won')
+    return 'Una venta confirmada debe estar en la etapa Ganado.';
+  if (Boolean(deal.next_follow_up_at) !== Boolean(deal.follow_up_status))
+    return 'El seguimiento requiere fecha y estado.';
+  if (
     deal.concrete_strength === 'other' &&
     !deal.concrete_strength_other?.trim()
   )

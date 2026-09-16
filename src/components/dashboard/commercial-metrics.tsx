@@ -97,9 +97,14 @@ export function CommercialMetrics({
       pending: data.pending_negotiation_volume,
     },
     {
-      label: 'm³ ganados',
+      label: 'm³ ganados estimados',
       value: data.won_m3,
       pending: data.pending_won_volume,
+    },
+    {
+      label: 'm³ vendidos reales',
+      value: data.sold_m3,
+      pending: data.won_missing_actuals,
     },
   ];
   return (
@@ -122,7 +127,7 @@ export function CommercialMetrics({
             : 'Todo el historial. Sin pipelines DEMO, conversiones de moneda ni volúmenes inventados.'}
         </p>
       </div>
-      <dl className="grid gap-4 sm:grid-cols-3">
+      <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {volumes.map((v) => (
           <div key={v.label} className="bg-muted/60 rounded-lg p-4">
             <dt className="text-muted-foreground text-sm">{v.label}</dt>
@@ -137,6 +142,27 @@ export function CommercialMetrics({
           </div>
         ))}
       </dl>
+      <div className="bg-muted/40 grid gap-3 rounded-lg p-4 text-sm sm:grid-cols-3">
+        <p>
+          <span className="text-muted-foreground">Seguimientos vencidos</span>
+          <br />
+          <strong className="tabular-nums">{data.follow_ups_due}</strong>
+        </p>
+        <p>
+          <span className="text-muted-foreground">
+            Abiertas sin actividad · 14 días
+          </span>
+          <br />
+          <strong className="tabular-nums">{data.inactive_open}</strong>
+        </p>
+        <p>
+          <span className="text-muted-foreground">
+            Ganadas con resultado pendiente
+          </span>
+          <br />
+          <strong className="tabular-nums">{data.won_missing_actuals}</strong>
+        </p>
+      </div>
       <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:grid-cols-8">
         <div>
           <dt className="text-muted-foreground text-xs">Abiertas</dt>
@@ -162,12 +188,13 @@ export function CommercialMetrics({
             {data.currencies.map((c) => (
               <div key={c.currency}>
                 <dt className="text-muted-foreground text-xs">
-                  {c.currency} · abierto / ganado
+                  {c.currency} · estimado abierto / estimado ganado / vendido
+                  real
                 </dt>
                 <dd className="mt-1 text-sm font-semibold tabular-nums">
                   {c.currency === 'UNKNOWN'
-                    ? `${c.open_value} / ${c.won_value} (sin moneda)`
-                    : `${formatCurrency(c.open_value, c.currency)} / ${formatCurrency(c.won_value, c.currency)}`}
+                    ? `${c.open_value} / ${c.won_value} / ${c.sold_value} (sin moneda)`
+                    : `${formatCurrency(c.open_value, c.currency)} / ${formatCurrency(c.won_value, c.currency)} / ${formatCurrency(c.sold_value, c.currency)}`}
                 </dd>
               </div>
             ))}

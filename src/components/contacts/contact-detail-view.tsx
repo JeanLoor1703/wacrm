@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { addContactTag, deleteContactTag } from '@/lib/contacts/tag-api';
 import { useAuth } from '@/hooks/use-auth';
 import { formatCurrency } from '@/lib/currency';
 import { toast } from 'sonner';
-import type { Contact, Tag, ContactTag, ContactNote, CustomField, ContactCustomValue, Deal, MessageTemplate } from '@/types';
+import type { Contact, Tag, ContactTag, ContactNote, CustomField, ContactCustomValue, Deal, MessageTemplate, LeadSource } from '@/types';
 import {
   TemplatePicker,
   type TemplateSendValues,
@@ -43,6 +43,9 @@ import {
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { opportunityHref, strengthLabel } from '@/lib/creacom/model';
+import { LEAD_SOURCES, leadSourceLabel } from '@/lib/creacom/lead-source';
+import { summarizeContactDeals } from '@/lib/creacom/history';
+import { commercialAuditChanges } from '@/lib/creacom/audit';
 
 interface ContactDetailViewProps {
   open: boolean;
@@ -76,6 +79,7 @@ export function ContactDetailView({
   const [editPhone, setEditPhone] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editCompany, setEditCompany] = useState('');
+  const [editLeadSource, setEditLeadSource] = useState<LeadSource>('unknown');
   const [savingDetails, setSavingDetails] = useState(false);
 
   // Tags tab
@@ -115,6 +119,7 @@ export function ContactDetailView({
       setEditPhone(data.phone);
       setEditEmail(data.email ?? '');
       setEditCompany(data.company ?? '');
+      setEditLeadSource(data.lead_source ?? 'unknown');
     }
     setLoading(false);
   }, [contactId, supabase]);
@@ -213,6 +218,7 @@ export function ContactDetailView({
         phone: editPhone.trim(),
         email: editEmail.trim() || null,
         company: editCompany.trim() || null,
+        lead_source: editLeadSource,
         updated_at: new Date().toISOString(),
       })
       .eq('id', contactId);
@@ -220,6 +226,15 @@ export function ContactDetailView({
     if (error) {
       toast.error(t('toastUpdateFailed'));
     } else {
+      const { data: authData } = await supabase.auth.getUser();
+      const nextContact = { name: editName.trim() || null, company: editCompany.trim() || null, lead_source: editLeadSource };
+      const rows = contact && accountId && authData.user
+        ? commercialAuditChanges(contact as unknown as Record<string, unknown>, nextContact, ['name', 'company', 'lead_source']).map((change) => ({ ...change, account_id: accountId, field_name: `contact.${change.field_name}`, origin: 'human', actor_user_id: authData.user.id, metadata: { source: 'contact_detail', contact_id: contactId } }))
+        : [];
+      if (rows.length) {
+        const { error: auditError } = await supabase.from('ai_change_log').insert(rows);
+        if (auditError) toast.warning('El contacto se guardó, pero no se pudo completar su auditoría.');
+      }
       toast.success(t('toastUpdated'));
       fetchContact();
       onUpdated();
@@ -378,6 +393,8 @@ export function ContactDetailView({
       .slice(0, 2);
   }
 
+  const commercialSummary = useMemo(() => summarizeContactDeals(deals), [deals]);
+
   return (
     <>
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -522,6 +539,13 @@ export function ContactDetailView({
                       onChange={(e) => setEditCompany(e.target.value)}
                       className="bg-muted border-border text-foreground h-8 text-sm"
                     />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-muted-foreground text-xs">Origen comprobado</Label>
+                    <select value={editLeadSource} onChange={(e) => setEditLeadSource(e.target.value as LeadSource)} className="bg-muted border-border text-foreground h-9 w-full rounded-md border px-3 text-sm">
+                      {LEAD_SOURCES.map((source) => <option key={source.value} value={source.value}>{source.label}</option>)}
+                    </select>
+                    <p className="text-muted-foreground text-[11px]">Si no existe evidencia, conserva Desconocido.</p>
                   </div>
                   <Button
                     onClick={saveDetails}
@@ -700,6 +724,26 @@ export function ContactDetailView({
                   <p className="text-xs text-muted-foreground">{t('dealsTab.noDeals')}</p>
                 ) : (
                   <div className="space-y-2">
+                    <section className="bg-muted/30 border-border mb-4 rounded-lg border p-3" aria-label="Resumen comercial">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-muted-foreground text-[11px] font-medium uppercase tracking-wide">Compras acumuladas</p>
+                          <p className="text-2xl font-semibold tabular-nums">{commercialSummary.actualVolumeM3.toLocaleString('es-EC')} m³</p>
+                        </div>
+                        <Badge variant="outline">{leadSourceLabel(contact?.lead_source)}</Badge>
+                      </div>
+                      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                        <div><p className="text-muted-foreground">Oportunidades</p><p className="font-semibold tabular-nums">{commercialSummary.total}</p></div>
+                        <div><p className="text-muted-foreground">Ganadas</p><p className="font-semibold tabular-nums">{commercialSummary.won}</p></div>
+                        <div><p className="text-muted-foreground">Abiertas</p><p className="font-semibold tabular-nums">{commercialSummary.open}</p></div>
+                      </div>
+                      {commercialSummary.soldValues.map((amount) => <p key={amount.currency} className="text-muted-foreground mt-2 text-xs">Vendido real: <span className="text-foreground font-medium tabular-nums">{formatCurrency(amount.value, amount.currency)}</span></p>)}
+                      <div className="text-muted-foreground mt-2 space-y-1 text-xs">
+                        <p>Última compra: {commercialSummary.lastSaleDate ? new Date(`${commercialSummary.lastSaleDate}T12:00:00`).toLocaleDateString('es-EC') : 'Sin compra confirmada'}</p>
+                        <p>Próximo seguimiento: {commercialSummary.nextFollowUpAt ? new Date(commercialSummary.nextFollowUpAt).toLocaleString('es-EC') : 'Sin seguimiento pendiente'}</p>
+                        <p>Última interacción registrada: {contact?.updated_at ? new Date(contact.updated_at).toLocaleString('es-EC') : 'Sin datos'}</p>
+                      </div>
+                    </section>
                     {deals.map((deal) => (
                       <div
                         key={deal.id}
@@ -721,7 +765,8 @@ export function ContactDetailView({
                             </span>
                           )}
                         </div>
-                        <p className="mt-2 text-xs text-muted-foreground">{deal.work_location || 'Ubicación por confirmar'} · {deal.estimated_volume_m3 == null ? 'Volumen pendiente' : `${deal.estimated_volume_m3} m³`} · {strengthLabel(deal)}</p>
+                        <p className="mt-2 text-xs text-muted-foreground">{deal.work_location || 'Ubicación por confirmar'} · {deal.estimated_volume_m3 == null ? 'Volumen pendiente' : `${deal.estimated_volume_m3} m³ estimados`} · {strengthLabel(deal)}</p>
+                        {deal.sale_evidence === 'confirmed_sale' && <p className="mt-1 text-xs font-medium text-primary">Compra real: {deal.actual_volume_m3} m³ · {formatCurrency(deal.final_sale_value ?? 0, deal.currency || defaultCurrency)}</p>}
                         <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <DollarSign className="size-3" />
