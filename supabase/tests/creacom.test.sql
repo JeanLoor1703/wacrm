@@ -125,6 +125,8 @@ select has_column('conversations','ai_handoff_state','handoff state persists');
 select has_table('ai_change_log','AI change audit table exists');
 select ok((select relrowsecurity from pg_class where oid='ai_change_log'::regclass),'AI audit RLS enabled');
 select ok((select count(*) from pg_policies where schemaname='public' and tablename='ai_change_log' and policyname='ai_change_log_select')=1,'AI audit account read policy');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000001',true);
 select throws_ok($$insert into ai_change_log(account_id,field_name,origin) select b,'estimated_volume_m3','ai' from tenants$$,'42501',null,'AI audit cannot cross accounts');
 select has_table('domain_events','commercial domain event table exists');
 select ok((select relrowsecurity from pg_class where oid='domain_events'::regclass),'domain events RLS enabled');
