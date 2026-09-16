@@ -4,6 +4,7 @@ import { checkRateLimit, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit
 import { decrypt } from '@/lib/whatsapp/encryption'
 import { validateAiCredentials } from '@/lib/ai/validate'
 import { AiError, type AiProvider } from '@/lib/ai/types'
+import { AI_PROVIDER_DEFAULT_BASE_URL, normalizeAiBaseUrl } from '@/lib/ai/defaults'
 
 /**
  * POST /api/ai/test  (admin+)
@@ -27,9 +28,9 @@ export async function POST(request: Request) {
     }
 
     const provider = body.provider as AiProvider
-    if (provider !== 'openai' && provider !== 'anthropic') {
+    if (provider !== 'openai' && provider !== 'anthropic' && provider !== 'groq') {
       return NextResponse.json(
-        { error: 'provider must be "openai" or "anthropic"' },
+        { error: 'provider must be "openai", "anthropic" or "groq"' },
         { status: 400 },
       )
     }
@@ -37,6 +38,8 @@ export async function POST(request: Request) {
     if (!model) {
       return NextResponse.json({ error: 'model is required' }, { status: 400 })
     }
+    const baseUrl = normalizeAiBaseUrl(body.base_url, AI_PROVIDER_DEFAULT_BASE_URL[provider])
+    if (body.base_url && !baseUrl) return NextResponse.json({ error: 'base_url must be a valid HTTPS URL' }, { status: 400 })
 
     const rawKey = typeof body.api_key === 'string' ? body.api_key.trim() : ''
     let apiKeyPlain = rawKey
@@ -66,6 +69,7 @@ export async function POST(request: Request) {
       await validateAiCredentials({
         provider,
         model,
+        baseUrl,
         apiKey: apiKeyPlain,
         systemPrompt: null,
         isActive: true,

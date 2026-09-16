@@ -13,6 +13,24 @@ import type { AiProvider } from './types'
 export const AI_PROVIDER_DEFAULT_MODEL: Record<AiProvider, string> = {
   openai: 'gpt-5.4-mini',
   anthropic: 'claude-haiku-4-5-20251001',
+  groq: 'llama-3.3-70b-versatile',
+}
+
+export const AI_PROVIDER_DEFAULT_BASE_URL: Record<AiProvider, string | null> = {
+  openai: 'https://api.openai.com/v1',
+  anthropic: 'https://api.anthropic.com',
+  groq: 'https://api.groq.com/openai/v1',
+}
+
+export function normalizeAiBaseUrl(input: unknown, fallback: string | null): string | null {
+  if (typeof input !== 'string' || !input.trim()) return fallback
+  try {
+    const url = new URL(input.trim())
+    if (url.protocol !== 'https:') return null
+    return url.toString().replace(/\/$/, '')
+  } catch {
+    return null
+  }
 }
 
 /**

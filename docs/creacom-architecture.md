@@ -1,4 +1,40 @@
-# CREACOM — Fase 1: modelo comercial
+# CREACOM — Fase 2: modelo comercial e IA
+
+La Fase 1 queda preservada en este documento; la Fase 2 añade asistencia
+comercial interna sin cambiar Meta, WhatsApp ni el dominio principal.
+
+## IA comercial
+
+`ai_configs` conserva las claves BYO cifradas con el mecanismo AES-256-GCM
+existente. Los proveedores soportados son OpenAI, Anthropic y Groq; Groq usa
+su endpoint compatible con Chat Completions. `base_url` y `model` son
+configurables, pero las claves nunca se devuelven al navegador. El simulador de
+`/agents` llama a `/api/ai/simulator`, no envía mensajes externos y limita sus
+escrituras al `account_id` autenticado.
+
+La respuesta estructurada sólo admite `reply` y una lista blanca de campos de
+contacto/obra. El servidor descarta claves desconocidas, rechaza volúmenes no
+positivos y enums inválidos, conserva valores humanos no vacíos y registra cada
+cambio en `ai_change_log` sin prompts, secretos ni cadena de razonamiento.
+La IA puede avanzar una obra abierta de Nuevo a Calificando cuando hay un dato
+de calificación explícito; nunca cierra Ganado/No concretado ni sobreescribe
+campos confirmados. Precio, descuentos, crédito, reclamos, excepciones o una
+petición de asesor activan `HUMAN_REQUESTED`; al tomar el hilo se usa
+`HUMAN_ACTIVE` y el auto-reply queda pausado. Reanudar desde Inbox vuelve a
+`AI_ACTIVE` de forma explícita.
+
+La Knowledge Base existente se reutiliza como contexto aprobado. Si no existe
+un dato, la IA pregunta progresivamente; no inventa resistencia, volumen,
+precios, fechas, disponibilidad, bomba ni acceso.
+
+## Migración Fase 2
+
+`20260915120000_creacom_ai_commercial.sql` amplía proveedores/base URL, añade
+estado de handoff persistente y crea `ai_change_log` con RLS por cuenta.
+Aplicar esta expansión sólo al proyecto Supabase autorizado
+`bqehnefuivaojiegapei`; no usar `db push` sobre el historial alojado y no tocar
+otros proyectos. En Preview usar una cuenta DEMO aislada y credenciales
+seguras.
 
 ## Alcance y límites
 

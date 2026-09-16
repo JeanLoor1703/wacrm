@@ -40,11 +40,12 @@ function normalizeForAnthropic(messages: ChatMessage[]): ChatMessage[] {
  * in `generateReply`).
  */
 export async function generateAnthropic(args: ProviderArgs): Promise<ProviderResult> {
-  const { apiKey, model, systemPrompt, messages, timeoutMs } = args
+  const { apiKey, model, systemPrompt, messages, timeoutMs, baseUrl } = args
 
   let res: Response
   try {
-    res = await fetch(ANTHROPIC_URL, {
+    const endpoint = `${(baseUrl || 'https://api.anthropic.com').replace(/\/$/, '')}/v1/messages`
+    res = await fetch(endpoint === 'https://api.anthropic.com/v1/messages' ? ANTHROPIC_URL : endpoint, {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,

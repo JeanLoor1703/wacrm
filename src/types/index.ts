@@ -181,6 +181,9 @@ export interface Conversation {
   ai_autoreply_disabled?: boolean;
   ai_reply_count?: number;
   ai_handoff_summary?: string | null;
+  ai_handoff_state?: 'AI_ACTIVE' | 'HUMAN_REQUESTED' | 'HUMAN_ACTIVE';
+  ai_handoff_reason?: string | null;
+  ai_handoff_requested_at?: string | null;
 }
 
 // ============================================================

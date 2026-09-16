@@ -69,12 +69,13 @@ export async function dispatchInboundToAiReply(
 
     const { data: conv, error: convErr } = await db
       .from('conversations')
-      .select('assigned_agent_id, ai_autoreply_disabled, ai_reply_count')
+      .select('assigned_agent_id, ai_autoreply_disabled, ai_reply_count, ai_handoff_state')
       .eq('id', conversationId)
       .maybeSingle()
     if (convErr || !conv) return
     if (conv.assigned_agent_id) return // a human owns this thread
     if (conv.ai_autoreply_disabled) return // handed off / turned off here
+    if (conv.ai_handoff_state === 'HUMAN_ACTIVE' || conv.ai_handoff_state === 'HUMAN_REQUESTED') return
     // Cheap early-out; the authoritative cap check is the atomic claim
     // below (this read can race a concurrent inbound).
     if (conv.ai_reply_count >= config.autoReplyMaxPerConversation) return
@@ -146,6 +147,8 @@ export async function dispatchInboundToAiReply(
       })
       const update: Record<string, unknown> = {
         ai_autoreply_disabled: true,
+        ai_handoff_state: 'HUMAN_REQUESTED',
+        ai_handoff_requested_at: new Date().toISOString(),
         ai_handoff_summary: summary,
       }
       // Only set the assignee when a target is configured AND the thread
