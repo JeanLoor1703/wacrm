@@ -23,4 +23,13 @@ describe('commercial AI structured updates', () => {
     const result = parseCommercialResult('```json\n{"reply":"Te comunico con un asesor.","updates":{"handoff":true,"handoff_reason":"negociar precio"}}\n```')
     expect(result).toEqual({ reply: 'Te comunico con un asesor.', updates: { handoff: true, handoff_reason: 'negociar precio' } })
   })
+
+  it('validates dates and commercial signals without guessing', () => {
+    const result = parseCommercialResult('{"reply":"ok","updates":{"scheduled_date":"2026-02-30","commercial_intent":"high","quote_requested":true,"human_requested":true,"contact_company":"Constructora ABC"}}')
+    expect(result.updates).toEqual({ commercial_intent: 'high', quote_requested: true, human_requested: true, contact_company: 'Constructora ABC' })
+  })
+
+  it('progressively applies explicit positive commercial signals', () => {
+    expect(mergeCommercialUpdates({ quote_requested: false, human_requested: false }, { quote_requested: true, human_requested: true }).applied).toEqual({ quote_requested: true, human_requested: true })
+  })
 })

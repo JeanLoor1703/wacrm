@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     const generated = await generateReply({ config, systemPrompt: `${systemPrompt}\n\n${knowledge.length ? `Knowledge base:\n${knowledge.join('\n---\n')}` : ''}`, messages })
     const parsed = parseCommercialResult(generated.text)
     const { applied, conflicts } = mergeCommercialUpdates(deal, parsed.updates)
-    const explicitHuman = HUMAN_REQUEST.test(latestUserMessage(messages)) || parsed.updates.handoff === true || generated.handoff
+    const explicitHuman = HUMAN_REQUEST.test(latestUserMessage(messages)) || parsed.updates.handoff === true || parsed.updates.human_requested === true || generated.handoff
 
     const auditRows: Record<string, unknown>[] = []
     const write = async (table: string, payload: Record<string, unknown>, id: string) => {
@@ -48,13 +48,20 @@ export async function POST(request: Request) {
       await write('deals', dealPatch, dealId)
       for (const [field, value] of Object.entries(dealPatch)) auditRows.push({ account_id: accountId, deal_id: dealId, field_name: field, old_value: deal[field] ?? null, new_value: value, origin: 'ai', actor_user_id: userId, metadata: { surface: 'commercial_simulator' } })
     }
-    if (typeof parsed.updates.contact_name === 'string' && deal.contact_id) {
-      const { data: contact } = await supabase.from('contacts').select('id, name').eq('id', deal.contact_id).eq('account_id', accountId).maybeSingle()
+    if ((typeof parsed.updates.contact_name === 'string' || typeof parsed.updates.contact_company === 'string') && deal.contact_id) {
+      const { data: contact } = await supabase.from('contacts').select('id, name, company').eq('id', deal.contact_id).eq('account_id', accountId).maybeSingle()
       if (contact) {
+        const contactPatch: Record<string, string> = {}
         if (!contact.name?.trim()) {
-          await supabase.from('contacts').update({ name: parsed.updates.contact_name }).eq('id', contact.id).eq('account_id', accountId)
-          auditRows.push({ account_id: accountId, deal_id: dealId, field_name: 'contact.name', old_value: contact.name ?? null, new_value: parsed.updates.contact_name, origin: 'ai', actor_user_id: userId, metadata: { surface: 'commercial_simulator' } })
-        } else if (contact.name !== parsed.updates.contact_name) conflicts.push('contact_name')
+          if (typeof parsed.updates.contact_name === 'string') contactPatch.name = parsed.updates.contact_name
+        } else if (typeof parsed.updates.contact_name === 'string' && contact.name !== parsed.updates.contact_name) conflicts.push('contact_name')
+        if (!contact.company?.trim()) {
+          if (typeof parsed.updates.contact_company === 'string') contactPatch.company = parsed.updates.contact_company
+        } else if (typeof parsed.updates.contact_company === 'string' && contact.company !== parsed.updates.contact_company) conflicts.push('contact_company')
+        if (Object.keys(contactPatch).length) {
+          await supabase.from('contacts').update(contactPatch).eq('id', contact.id).eq('account_id', accountId)
+          for (const [field, value] of Object.entries(contactPatch)) auditRows.push({ account_id: accountId, deal_id: dealId, field_name: `contact.${field}`, old_value: contact[field as 'name' | 'company'] ?? null, new_value: value, origin: 'ai', actor_user_id: userId, metadata: { surface: 'commercial_simulator' } })
+        }
       }
     }
 

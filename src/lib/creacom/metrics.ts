@@ -7,10 +7,20 @@ export interface CommercialMetricsData {
   open_m3: number;
   negotiation_m3: number;
   won_m3: number;
+  sold_m3: number;
+  sold_value: number;
+  won_missing_actuals: number;
+  follow_ups_due: number;
+  inactive_open: number;
   pending_open_volume: number;
   pending_negotiation_volume: number;
   pending_won_volume: number;
-  currencies: { currency: string; open_value: number; won_value: number }[];
+  currencies: {
+    currency: string;
+    open_value: number;
+    won_value: number;
+    sold_value: number;
+  }[];
 }
 export async function loadCommercialMetrics(
   db: SupabaseClient,

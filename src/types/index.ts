@@ -107,6 +107,8 @@ export interface Contact {
   name?: string;
   email?: string;
   company?: string;
+  /** Proven channel only. Keep `unknown` when no reliable evidence exists. */
+  lead_source?: LeadSource;
   avatar_url?: string;
   created_at: string;
   updated_at: string;
@@ -114,6 +116,18 @@ export interface Contact {
    *  Inbox conversation list, for tag filtering). Absent otherwise. */
   tags?: Tag[];
 }
+
+export type LeadSource =
+  | 'whatsapp_direct'
+  | 'website'
+  | 'facebook_ads'
+  | 'instagram'
+  | 'google'
+  | 'referral'
+  | 'recurring_customer'
+  | 'manual'
+  | 'other'
+  | 'unknown';
 
 export interface Tag {
   id: string;
@@ -384,6 +398,10 @@ export type CommercialStageKey =
 export type UnknownBoolean = 'yes' | 'no' | 'unknown';
 export type ConcreteStrength =
   'H-180' | 'H-210' | 'H-240' | 'H-280' | 'other' | 'unknown';
+export type SaleEvidence =
+  'unknown' | 'possible_historical_sale' | 'confirmed_sale';
+export type CommercialIntent = 'unknown' | 'low' | 'medium' | 'high';
+export type FollowUpStatus = 'pending' | 'completed' | 'cancelled';
 export interface DealLossReason {
   id: string;
   account_id: string;
@@ -400,6 +418,16 @@ export interface Deal {
   concrete_strength?: ConcreteStrength;
   concrete_strength_other?: string | null;
   estimated_volume_m3?: number | null;
+  actual_volume_m3?: number | null;
+  final_sale_value?: number | null;
+  sale_date?: string | null;
+  sale_evidence?: SaleEvidence;
+  commercial_intent?: CommercialIntent;
+  quote_requested?: boolean;
+  human_requested?: boolean;
+  next_follow_up_at?: string | null;
+  follow_up_reason?: string | null;
+  follow_up_status?: FollowUpStatus | null;
   scheduled_date?: string | null;
   needs_pump?: UnknownBoolean;
   mixer_access?: UnknownBoolean;
@@ -450,6 +478,10 @@ export interface Broadcast {
   read_count: number;
   replied_count: number;
   failed_count: number;
+  crm_segment_key?: string | null;
+  crm_segment_params?: Record<string, unknown>;
+  planning_only?: boolean;
+  calculated_recipients?: number;
   /**
    * Set while a server-side delivery pass is fanning out, NULL when
    * idle. Claimed with a conditional UPDATE so two resumes can't both

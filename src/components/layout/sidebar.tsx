@@ -23,9 +23,7 @@ import {
   UserCog,
   Users,
   UsersRound,
-  Workflow,
   X,
-  Zap,
 } from 'lucide-react';
 import type { AccountRole } from '@/lib/auth/roles';
 import creacomLogo from '../../../material/creahormigoneralogo.png';
@@ -90,8 +88,6 @@ const navItems: NavItem[] = [
   { href: '/contacts', labelKey: 'contacts', icon: Users },
   { href: '/pipelines', labelKey: 'pipelines', icon: GitBranch },
   { href: '/broadcasts', labelKey: 'broadcasts', icon: Radio },
-  { href: '/automations', labelKey: 'automations', icon: Zap },
-  { href: '/flows', labelKey: 'flows', icon: Workflow, beta: true },
   { href: '/agents', labelKey: 'aiAgents', icon: Bot },
 ];
 

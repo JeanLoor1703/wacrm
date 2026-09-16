@@ -187,4 +187,13 @@ describe('CREACOM progressive opportunity model', () => {
       /valor/
     )
   );
+  it('keeps estimated and real results separate', () => {
+    expect(validateOpportunity({ ...base, stage_id: 'won', estimated_volume_m3: 25, actual_volume_m3: 22, final_sale_value: 1200, sale_date: '2026-09-15', sale_evidence: 'confirmed_sale' }, stages, [], true)).toBeNull();
+  });
+  it('requires complete actuals only when confirming a sale', () => {
+    expect(validateOpportunity({ ...base, sale_evidence: 'confirmed_sale' }, stages, [], true)).toMatch(/volumen real/);
+    expect(validateOpportunity({ ...base, sale_evidence: 'possible_historical_sale' }, stages, [], true)).toBeNull();
+  });
+  it('requires both date and status for follow-up', () =>
+    expect(validateOpportunity({ ...base, next_follow_up_at: '2026-09-16T14:00:00Z' }, stages, [], true)).toMatch(/seguimiento/));
 });
